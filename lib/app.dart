@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
       title: 'Laebun va Lahv',
       theme: ThemeData.dark(useMaterial3: true).copyWith(
           appBarTheme: AppBarTheme(color: appBarColor),
-          scaffoldBackgroundColor: scaffoldColor,
+          // scaffoldBackgroundColor: scaffoldColor,
           iconButtonTheme: IconButtonThemeData(
               style: ButtonStyle(iconColor: WidgetStatePropertyAll(iconColor))),
           bottomAppBarTheme: BottomAppBarTheme(color: appBarColor)),

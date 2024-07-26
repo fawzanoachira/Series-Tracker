@@ -7,7 +7,7 @@ class BottomAppBarData extends StatelessWidget {
   Widget build(BuildContext context) {
     return BottomAppBar(
       height: 70,
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
         IconButton(onPressed: () {}, icon: const Icon(Icons.tv_rounded)),
         IconButton(onPressed: () {}, icon: const Icon(Icons.explore)),
         IconButton(onPressed: () {}, icon: const Icon(Icons.slideshow_sharp)),
