@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:laebun_va_lahv/api/tracker.dart';
 import 'package:laebun_va_lahv/models/search.dart';
 import 'package:laebun_va_lahv/screens/home/widget/bottom_app_bar.dart';
@@ -34,7 +35,19 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             ...searchres.map((e) => ListTile(
-                  title: Text(e.show!.name ?? ""),
+                  title: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image(
+                          image: NetworkImage("${e.show!.image?.medium}"),
+                          // errorBuilder: (context, error, stackTrace) =>
+                          //     const Text("No Image"),
+                          height: 140,
+                          width: 100,
+                          fit: BoxFit.contain),
+                      Text(e.show!.name ?? ""),
+                    ],
+                  ),
                 ))
           ],
         ),

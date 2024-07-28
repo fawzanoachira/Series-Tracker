@@ -1,7 +1,7 @@
 import 'package:laebun_va_lahv/models/show.dart';
 
 class Search {
-  int? score;
+  double? score;
   Show? show;
 
   Search({this.score, this.show});

@@ -5,7 +5,7 @@ import 'package:laebun_va_lahv/models/network.dart';
 import 'package:laebun_va_lahv/models/rating.dart';
 import 'package:laebun_va_lahv/models/schedule.dart';
 
-class Show {
+class SingleSearch {
   int? id;
   String? url;
   String? name;
@@ -30,7 +30,7 @@ class Show {
   int? updated;
   Links? lLinks;
 
-  Show(
+  SingleSearch(
       {this.id,
       this.url,
       this.name,
@@ -55,14 +55,8 @@ class Show {
       this.updated,
       this.lLinks});
 
-  Show.fromJson(Map<String, dynamic> json) {
-    if (json['id'] == null) {
-      id = null;
-    } else if (json['id'] is double) {
-      id = json['id'];
-    } else {
-      id = json['id'];
-    }
+  SingleSearch.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
     url = json['url'];
     name = json['name'];
     type = json['type'];
@@ -80,7 +74,7 @@ class Show {
     weight = json['weight'];
     network =
         json['network'] != null ? Network.fromJson(json['network']) : null;
-    // webChannel = json['webChannel'] != null ? WebChannel.fromJson(json['webchannel']);
+    // webChannel = json['webChannel'];
     dvdCountry = json['dvdCountry'];
     externals = json['externals'] != null
         ? Externals.fromJson(json['externals'])
@@ -131,8 +125,9 @@ class Show {
     return data;
   }
 
-  static List<Show> listFromJson(List<dynamic> list) {
-    List<Show> rows = list.map((i) => Show.fromJson(i)).toList();
+  static List<SingleSearch> listFromJson(List<dynamic> list) {
+    List<SingleSearch> rows =
+        list.map((i) => SingleSearch.fromJson(i)).toList();
     return rows;
   }
 }
