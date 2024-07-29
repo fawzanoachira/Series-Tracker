@@ -4,7 +4,7 @@ class Rating {
   Rating({this.average});
 
   Rating.fromJson(Map<String, dynamic> json) {
-    average = json['average'];
+    average = double.tryParse(json['average'].toString());
   }
 
   Map<String, dynamic> toJson() {
