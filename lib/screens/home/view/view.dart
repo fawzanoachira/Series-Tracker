@@ -12,10 +12,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController search = TextEditingController();
 
-  List<Search> searchres = [];
+  List<Search> searchResults = [];
   searchShows() async {
     // await searchShow(name: "The Boys");
-    searchres = await searchShow(name: search.text);
+    searchResults = await searchShow(name: search.text);
     setState(() {});
   }
 
@@ -31,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ]),
         body: SingleChildScrollView(
             child: Column(children: [
-          ...searchres.map((e) => ListTile(
+          ...searchResults.map((e) => ListTile(
               onTap: () {},
               title: Padding(
                 padding: const EdgeInsets.all(8.0),
