@@ -4,7 +4,6 @@ import 'package:series_tracker/models/links.dart';
 import 'package:series_tracker/models/network.dart';
 import 'package:series_tracker/models/rating.dart';
 import 'package:series_tracker/models/schedule.dart';
-import 'package:series_tracker/models/webchannel.dart';
 
 class Show {
   int? id;
@@ -57,13 +56,6 @@ class Show {
       this.lLinks});
 
   Show.fromJson(Map<String, dynamic> json) {
-    // if (json['id'] == null) {
-    //   id = null;
-    // } else if (json['id'] is double) {
-    //   id = json['id'];
-    // } else {
-    //   id = json['id'];
-    // }
     id = json['id'];
     url = json['url'];
     name = json['name'];
