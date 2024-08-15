@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:laebun_va_lahv/api/tracker.dart';
-import 'package:laebun_va_lahv/models/search.dart';
+import 'package:series_tracker/api/tracker.dart';
+import 'package:series_tracker/models/search.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

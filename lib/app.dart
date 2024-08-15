@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:laebun_va_lahv/config/color/color.dart';
-import 'package:laebun_va_lahv/screens/home/home_screen.dart';
+import 'package:series_tracker/config/color/color.dart';
+import 'package:series_tracker/screens/home/home_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

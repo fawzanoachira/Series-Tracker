@@ -1,5 +1,5 @@
-import 'package:laebun_va_lahv/models/previous_episode.dart';
-import 'package:laebun_va_lahv/models/self.dart';
+import 'package:series_tracker/models/previous_episode.dart';
+import 'package:series_tracker/models/self.dart';
 
 class Links {
   Self? self;

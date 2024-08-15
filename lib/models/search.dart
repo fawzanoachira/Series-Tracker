@@ -1,4 +1,4 @@
-import 'package:laebun_va_lahv/models/show.dart';
+import 'package:series_tracker/models/show.dart';
 
 class Search {
   double? score;

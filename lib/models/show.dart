@@ -1,9 +1,10 @@
-import 'package:laebun_va_lahv/models/externals.dart';
-import 'package:laebun_va_lahv/models/image_tvmaze.dart';
-import 'package:laebun_va_lahv/models/links.dart';
-import 'package:laebun_va_lahv/models/network.dart';
-import 'package:laebun_va_lahv/models/rating.dart';
-import 'package:laebun_va_lahv/models/schedule.dart';
+import 'package:series_tracker/models/externals.dart';
+import 'package:series_tracker/models/image_tvmaze.dart';
+import 'package:series_tracker/models/links.dart';
+import 'package:series_tracker/models/network.dart';
+import 'package:series_tracker/models/rating.dart';
+import 'package:series_tracker/models/schedule.dart';
+import 'package:series_tracker/models/webchannel.dart';
 
 class Show {
   int? id;
@@ -22,8 +23,8 @@ class Show {
   Rating? rating;
   int? weight;
   Network? network;
-  Null webChannel;
-  Null dvdCountry;
+  dynamic webChannel;
+  dynamic dvdCountry;
   Externals? externals;
   Image? image;
   String? summary;
@@ -81,7 +82,7 @@ class Show {
     weight = json['weight'];
     network =
         json['network'] != null ? Network.fromJson(json['network']) : null;
-    // webChannel = json['webChannel'] != null ? WebChannel.fromJson(json['webchannel']);
+    webChannel = json['webChannel'];
     dvdCountry = json['dvdCountry'];
     externals = json['externals'] != null
         ? Externals.fromJson(json['externals'])

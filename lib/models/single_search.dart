@@ -1,9 +1,9 @@
-import 'package:laebun_va_lahv/models/externals.dart';
-import 'package:laebun_va_lahv/models/image_tvmaze.dart';
-import 'package:laebun_va_lahv/models/links.dart';
-import 'package:laebun_va_lahv/models/network.dart';
-import 'package:laebun_va_lahv/models/rating.dart';
-import 'package:laebun_va_lahv/models/schedule.dart';
+import 'package:series_tracker/models/externals.dart';
+import 'package:series_tracker/models/image_tvmaze.dart';
+import 'package:series_tracker/models/links.dart';
+import 'package:series_tracker/models/network.dart';
+import 'package:series_tracker/models/rating.dart';
+import 'package:series_tracker/models/schedule.dart';
 
 class SingleSearch {
   int? id;

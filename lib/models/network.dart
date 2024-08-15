@@ -1,4 +1,4 @@
-import 'package:laebun_va_lahv/models/country.dart';
+import 'package:series_tracker/models/country.dart';
 
 class Network {
   int? id;
