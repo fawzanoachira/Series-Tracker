@@ -22,13 +22,20 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text("Lahv"), actions: [
-          SizedBox(width: 200, child: TextField(controller: search)),
-          IconButton(
-              onPressed: () => searchShows(),
-              icon: const Icon(Icons.search_rounded)),
-          const SizedBox(width: 20),
-        ]),
+        appBar: AppBar(
+            title: Image.asset(
+              "assets/images/lahv_logo.png",
+              // alignment: Alignment.center,
+              width: 350,
+              height: 350,
+            ),
+            actions: [
+              SizedBox(width: 200, child: TextField(controller: search)),
+              IconButton(
+                  onPressed: () => searchShows(),
+                  icon: const Icon(Icons.search_rounded)),
+              const SizedBox(width: 20),
+            ]),
         body: SingleChildScrollView(
             child: Column(children: [
           ...searchResults.map((e) => ListTile(
@@ -56,9 +63,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(e.show!.name ?? ""),
+                              Expanded(child: Text(e.show!.name ?? "")),
                               Text("Genre: ${e.show!.genres}"),
-                              Text("Average runtime: ${e.show!.averageRuntime}")
+                              Text(
+                                  "Average runtime: ${e.show!.averageRuntime}"),
+                              // Marquee(text: e.show!.name ?? "")
                             ])
                       ]),
                     ]),
