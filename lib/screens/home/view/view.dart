@@ -63,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Expanded(child: Text(e.show!.name ?? "")),
+                              Text(e.show!.name ?? ""),
                               Text("Genre: ${e.show!.genres}"),
                               Text(
                                   "Average runtime: ${e.show!.averageRuntime}"),
