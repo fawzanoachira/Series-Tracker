@@ -42,34 +42,32 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {},
               title: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Column(
+                child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(mainAxisSize: MainAxisSize.min, children: [
-                        Image(
-                            image: e.show!.image != null
-                                ? NetworkImage("${e.show!.image?.medium}")
-                                : const AssetImage(
-                                    'assets/images/no_image.jpg'),
-                            // errorBuilder: (context, error, stackTrace) =>
-                            //     const Text("No Image"),
-                            height: 140,
-                            width: 100,
-                            fit: BoxFit.contain),
-                        const SizedBox(width: 20),
-                        Column(
+                      Image(
+                          image: e.show!.image != null
+                              ? NetworkImage("${e.show!.image?.medium}")
+                              : const AssetImage('assets/images/no_image.jpg'),
+                          // errorBuilder: (context, error, stackTrace) =>
+                          //     const Text("No Image"),
+                          height: 140,
+                          width: 100,
+                          fit: BoxFit.contain),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(e.show!.name ?? ""),
                               Text("Genre: ${e.show!.genres}"),
-                              Text(
-                                  "Average runtime: ${e.show!.averageRuntime}"),
+                              Text("Average runtime: ${e.show!.averageRuntime}")
                               // Marquee(text: e.show!.name ?? "")
-                            ])
-                      ]),
+                            ]),
+                      )
                     ]),
               )))
         ])
