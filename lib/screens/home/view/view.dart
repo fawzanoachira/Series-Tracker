@@ -23,12 +23,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-            title: Image.asset(
-              "assets/images/lahv_logo.png",
-              // alignment: Alignment.center,
-              width: 350,
-              height: 350,
-            ),
+            title: Image.asset("assets/images/lahv_logo.png",
+                // alignment: Alignment.center,
+                width: 130,
+                height: 130,
+                fit: BoxFit.cover),
             actions: [
               SizedBox(width: 200, child: TextField(controller: search)),
               IconButton(
