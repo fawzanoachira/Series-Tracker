@@ -5,21 +5,25 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "laebun_va_lahv",
+            "name": "Flutter release",
+            "type": "dart",
             "request": "launch",
-            "type": "dart"
+            "program": "lib/main.dart",
+            "flutterMode": "release"
         },
         {
-            "name": "laebun_va_lahv (profile mode)",
-            "request": "launch",
+            "name": "Flutter profile",
             "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
             "flutterMode": "profile"
         },
         {
-            "name": "laebun_va_lahv (release mode)",
-            "request": "launch",
+            "name": "Flutter",
             "type": "dart",
-            "flutterMode": "release"
+            "request": "launch",
+            "program": "lib/main.dart"
         }
+
     ]
 }
