@@ -10,11 +10,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Laebun va Lahv',
       theme: ThemeData.dark(useMaterial3: true).copyWith(
-          appBarTheme: AppBarTheme(color: appBarColor),
+          appBarTheme: AppBarTheme(backgroundColor: appBarColor),
           // scaffoldBackgroundColor: scaffoldColor,
           iconButtonTheme: IconButtonThemeData(
               style: ButtonStyle(iconColor: WidgetStatePropertyAll(iconColor))),
-          bottomAppBarTheme: BottomAppBarTheme(color: appBarColor)),
+          bottomAppBarTheme: BottomAppBarThemeData(color: appBarColor)),
       debugShowCheckedModeBanner: false,
       home: const HomeScreen(),
     );

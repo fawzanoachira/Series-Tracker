@@ -1,4 +1,4 @@
-import 'package:series_tracker/models/show.dart';
+import 'package:series_tracker/models/tvmaze/show.dart';
 
 class Search {
   double? score;

@@ -2,7 +2,7 @@ import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:series_tracker/api/api.dart';
-import 'package:series_tracker/models/search.dart';
+import 'package:series_tracker/models/tvmaze/search.dart';
 
 final dio = Dio(baseOptions);
 

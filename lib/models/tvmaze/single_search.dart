@@ -1,11 +1,11 @@
-import 'package:series_tracker/models/externals.dart';
-import 'package:series_tracker/models/image_tvmaze.dart';
-import 'package:series_tracker/models/links.dart';
-import 'package:series_tracker/models/network.dart';
-import 'package:series_tracker/models/rating.dart';
-import 'package:series_tracker/models/schedule.dart';
+import 'package:series_tracker/models/tvmaze/externals.dart';
+import 'package:series_tracker/models/tvmaze/image_tvmaze.dart';
+import 'package:series_tracker/models/tvmaze/links.dart';
+import 'package:series_tracker/models/tvmaze/network.dart';
+import 'package:series_tracker/models/tvmaze/rating.dart';
+import 'package:series_tracker/models/tvmaze/schedule.dart';
 
-class Show {
+class SingleSearch {
   int? id;
   String? url;
   String? name;
@@ -22,15 +22,15 @@ class Show {
   Rating? rating;
   int? weight;
   Network? network;
-  dynamic webChannel;
-  dynamic dvdCountry;
+  Null webChannel;
+  Null dvdCountry;
   Externals? externals;
   Image? image;
   String? summary;
   int? updated;
   Links? lLinks;
 
-  Show(
+  SingleSearch(
       {this.id,
       this.url,
       this.name,
@@ -55,7 +55,7 @@ class Show {
       this.updated,
       this.lLinks});
 
-  Show.fromJson(Map<String, dynamic> json) {
+  SingleSearch.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     url = json['url'];
     name = json['name'];
@@ -74,7 +74,7 @@ class Show {
     weight = json['weight'];
     network =
         json['network'] != null ? Network.fromJson(json['network']) : null;
-    webChannel = json['webChannel'];
+    // webChannel = json['webChannel'];
     dvdCountry = json['dvdCountry'];
     externals = json['externals'] != null
         ? Externals.fromJson(json['externals'])
@@ -125,8 +125,9 @@ class Show {
     return data;
   }
 
-  static List<Show> listFromJson(List<dynamic> list) {
-    List<Show> rows = list.map((i) => Show.fromJson(i)).toList();
+  static List<SingleSearch> listFromJson(List<dynamic> list) {
+    List<SingleSearch> rows =
+        list.map((i) => SingleSearch.fromJson(i)).toList();
     return rows;
   }
 }

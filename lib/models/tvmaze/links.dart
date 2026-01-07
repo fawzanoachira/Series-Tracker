@@ -1,5 +1,5 @@
-import 'package:series_tracker/models/previous_episode.dart';
-import 'package:series_tracker/models/self.dart';
+import 'package:series_tracker/models/tvmaze/previous_episode.dart';
+import 'package:series_tracker/models/tvmaze/self.dart';
 
 class Links {
   Self? self;
