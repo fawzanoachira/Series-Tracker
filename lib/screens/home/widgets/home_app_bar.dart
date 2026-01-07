@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:series_tracker/screens/home/home_layout.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final TextEditingController searchController;
   final VoidCallback onSearch;
+  final HomeLayout layout;
+  final VoidCallback onToggleLayout;
 
   const HomeAppBar({
     super.key,
     required this.searchController,
     required this.onSearch,
+    required this.layout,
+    required this.onToggleLayout,
   });
 
   @override
@@ -35,6 +40,15 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           onPressed: onSearch,
           icon: const Icon(Icons.search_rounded),
         ),
+
+        // 👇 THIS IS THE TOGGLE BUTTON
+        IconButton(
+          icon: Icon(
+            layout == HomeLayout.grid ? Icons.view_list : Icons.grid_view,
+          ),
+          onPressed: onToggleLayout,
+        ),
+
         const SizedBox(width: 12),
       ],
     );

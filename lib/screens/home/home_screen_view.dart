@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:series_tracker/api/tracker.dart';
 import 'package:series_tracker/models/tvmaze/search.dart';
+import 'package:series_tracker/screens/home/home_layout.dart';
 import 'package:series_tracker/screens/home/widgets/home_app_bar.dart';
-import 'package:series_tracker/screens/home/widgets/show_tile.dart';
+import 'package:series_tracker/screens/home/widgets/show_results_view.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,6 +14,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController searchController = TextEditingController();
+  HomeLayout layout = HomeLayout.grid; // Hobi-style default
 
   List<Search> searchResults = [];
   bool isLoading = false;
@@ -46,6 +48,13 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: HomeAppBar(
         searchController: searchController,
         onSearch: searchShows,
+        layout: layout,
+        onToggleLayout: () {
+          setState(() {
+            layout =
+                layout == HomeLayout.grid ? HomeLayout.list : HomeLayout.grid;
+          });
+        },
       ),
       body: _buildBody(),
     );
@@ -58,18 +67,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (searchResults.isEmpty) {
       return const Center(
-        child: Text(
-          "Search for a TV series",
-          style: TextStyle(fontSize: 16),
-        ),
+        child: Text("Search for a TV series"),
       );
     }
 
-    return ListView.builder(
-      itemCount: searchResults.length,
-      itemBuilder: (context, index) {
-        return ShowTile(search: searchResults[index]);
-      },
+    return ShowResultsView(
+      results: searchResults,
+      layout: layout,
     );
   }
 }

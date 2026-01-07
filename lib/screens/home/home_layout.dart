@@ -1,0 +1,4 @@
+enum HomeLayout {
+  list,
+  grid,
+}
