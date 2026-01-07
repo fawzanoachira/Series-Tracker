@@ -11,47 +11,102 @@ class ShowTile extends StatelessWidget {
     final show = search.show;
     final imageUrl = show?.image?.medium;
 
-    return ListTile(
-      onTap: () {
-        // TODO: Navigate to details / add to tracker
-      },
-      contentPadding: const EdgeInsets.all(8),
-      title: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Image(
-            image: imageUrl != null
-                ? NetworkImage(imageUrl)
-                : const AssetImage('assets/images/no_image.jpg')
-                    as ImageProvider,
-            height: 140,
-            width: 100,
-            fit: BoxFit.cover,
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Material(
+        color: const Color.fromARGB(255, 34, 34, 34),
+        elevation: 2,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            // TODO: navigate to details
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  show?.name ?? '',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                /// Poster
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: imageUrl != null
+                      ? Image.network(
+                          imageUrl,
+                          height: 120,
+                          width: 85,
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          height: 120,
+                          width: 85,
+                          color: Colors.grey.shade300,
+                          alignment: Alignment.center,
+                          child: const Icon(Icons.tv, size: 32),
+                        ),
+                ),
+                const SizedBox(width: 14),
+
+                /// Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      /// Title
+                      Text(
+                        show?.name ?? '',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+
+                      /// Meta row
+                      Row(
+                        children: [
+                          if (show?.rating?.average != null) ...[
+                            const Icon(Icons.star,
+                                size: 14, color: Colors.amber),
+                            const SizedBox(width: 4),
+                            Text(
+                              show!.rating!.average.toString(),
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                            const SizedBox(width: 12),
+                          ],
+                          Text(
+                            '${show?.averageRuntime ?? '--'} min',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade300,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      /// Genres
+                      if (show?.genres?.isNotEmpty == true)
+                        Text(
+                          show!.genres!.join(' • '),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade300,
+                          ),
+                        ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "Genres: ${show?.genres?.join(', ') ?? 'N/A'}",
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "Average runtime: ${show?.averageRuntime ?? 'N/A'} min",
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
