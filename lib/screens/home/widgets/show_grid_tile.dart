@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:series_tracker/models/tvmaze/search.dart';
+import 'package:series_tracker/screens/show_detail/show_detail_screen.dart';
 
 class ShowGridTile extends StatelessWidget {
   final Search search;
@@ -12,9 +13,7 @@ class ShowGridTile extends StatelessWidget {
     final imageUrl = show?.image?.medium;
 
     return InkWell(
-      onTap: () {
-        // TODO: navigate to details
-      },
+      onTap: () => _openShowDetails(context),
       borderRadius: BorderRadius.circular(12),
       child: Column(
         mainAxisSize: MainAxisSize.min, // 👈 important
@@ -48,6 +47,18 @@ class ShowGridTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _openShowDetails(BuildContext context) {
+    final show = search.show;
+    if (show == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ShowDetailScreen(show: show),
       ),
     );
   }

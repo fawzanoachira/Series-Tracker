@@ -33,6 +33,7 @@ dependencies:
   flutter:
     sdk: flutter
   marquee: ^2.2.3
+  flutter_html: ^3.0.0
 
 dev_dependencies:
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:series_tracker/models/tvmaze/search.dart';
+import 'package:series_tracker/screens/show_detail/show_detail_screen.dart';
 
 class ShowTile extends StatelessWidget {
   final Search search;
@@ -9,7 +10,7 @@ class ShowTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final show = search.show;
-    final imageUrl = show?.image?.medium;
+    final imageUrl = show?.image?.original;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -19,9 +20,7 @@ class ShowTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            // TODO: navigate to details
-          },
+          onTap: () => _openShowDetails(context),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -107,6 +106,18 @@ class ShowTile extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _openShowDetails(BuildContext context) {
+    final show = search.show;
+    if (show == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ShowDetailScreen(show: show),
       ),
     );
   }
