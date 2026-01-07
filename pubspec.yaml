@@ -34,6 +34,9 @@ dependencies:
     sdk: flutter
   marquee: ^2.2.3
   flutter_html: ^3.0.0
+  cached_network_image: ^3.2.3
+  flutter_cache_manager: ^3.4.1
+  file: ^7.0.1
 
 dev_dependencies:
 
