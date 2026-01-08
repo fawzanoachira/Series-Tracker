@@ -1,10 +1,10 @@
-class Image {
+class ImageTvmaze {
   String? medium;
   String? original;
 
-  Image({this.medium, this.original});
+  ImageTvmaze({this.medium, this.original});
 
-  Image.fromJson(Map<String, dynamic> json) {
+  ImageTvmaze.fromJson(Map<String, dynamic> json) {
     medium = json['medium'];
     original = json['original'];
   }
@@ -16,8 +16,8 @@ class Image {
     return data;
   }
 
-  static List<Image> listFromJson(List<dynamic> list) {
-    List<Image> rows = list.map((i) => Image.fromJson(i)).toList();
+  static List<ImageTvmaze> listFromJson(List<dynamic> list) {
+    List<ImageTvmaze> rows = list.map((i) => ImageTvmaze.fromJson(i)).toList();
     return rows;
   }
 }

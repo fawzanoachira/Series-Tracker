@@ -1,3 +1,5 @@
+import 'image_tvmaze.dart';
+
 class Episode {
   int? id;
   int? season;
@@ -7,6 +9,7 @@ class Episode {
   String? airtime;
   String? runtime;
   String? summary;
+  ImageTvmaze? image;
 
   Episode({
     this.id,
@@ -17,6 +20,7 @@ class Episode {
     this.airtime,
     this.runtime,
     this.summary,
+    this.image,
   });
 
   Episode.fromJson(Map<String, dynamic> json) {
@@ -28,6 +32,8 @@ class Episode {
     airtime = json['airtime'];
     runtime = json['runtime']?.toString();
     summary = json['summary'];
+    image =
+        json['image'] != null ? ImageTvmaze.fromJson(json['image']) : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -40,6 +46,9 @@ class Episode {
     data['airtime'] = airtime;
     data['runtime'] = runtime;
     data['summary'] = summary;
+    if (image != null) {
+      data['image'] = image!.toJson();
+    }
     return data;
   }
 
