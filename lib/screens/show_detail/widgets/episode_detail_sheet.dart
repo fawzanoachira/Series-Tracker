@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:series_tracker/models/tvmaze/episode.dart';
 import 'package:series_tracker/models/tvmaze/show_image.dart';
@@ -142,6 +143,13 @@ class _EpisodeDetailSheetState extends State<EpisodeDetailSheet> {
     final text = raw.replaceAll(RegExp(r'<[^>]*>'), '');
     final bool showToggle = text.length > 140;
 
+    String displayText;
+    if (_expanded || !showToggle) {
+      displayText = text;
+    } else {
+      displayText = text.substring(0, 140);
+    }
+
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.only(bottom: _dotsHeight),
@@ -149,33 +157,44 @@ class _EpisodeDetailSheetState extends State<EpisodeDetailSheet> {
           physics: _expanded
               ? const BouncingScrollPhysics()
               : const NeverScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // The summary text
-              Text(
-                _expanded || !showToggle
-                    ? text
-                    : '${text.substring(0, 140)}...', // truncate if not expanded
-                softWrap: true,
-              ),
-
-              // Read more / Show less toggle
-              if (showToggle)
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _expanded = !_expanded),
-                    child: Text(
-                      _expanded ? 'Show less' : 'Read more',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.bold,
+          child: Text.rich(
+            TextSpan(
+              text: displayText,
+              style: Theme.of(context).textTheme.bodyMedium,
+              children: showToggle && !_expanded
+                  ? [
+                      TextSpan(
+                        text: '... read more',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            setState(() {
+                              _expanded = true;
+                            });
+                          },
                       ),
-                    ),
-                  ),
-                ),
-            ],
+                    ]
+                  : _expanded && showToggle
+                      ? [
+                          TextSpan(
+                            text: ' show less',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                setState(() {
+                                  _expanded = false;
+                                });
+                              },
+                          )
+                        ]
+                      : [],
+            ),
           ),
         ),
       ),
