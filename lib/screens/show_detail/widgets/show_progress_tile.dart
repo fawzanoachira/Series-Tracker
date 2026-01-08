@@ -8,7 +8,7 @@ class SeasonProgressTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const progress = 0.4; // TODO: from local tracking
+    const progress = 0.0; // TODO: from local tracking
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

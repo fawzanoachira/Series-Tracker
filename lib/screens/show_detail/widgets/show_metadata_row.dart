@@ -16,7 +16,7 @@ class ShowMetadataRow extends StatelessWidget {
           _MetaItem(Icons.star, '${show.rating?.average ?? '-'}'),
           _MetaItem(Icons.movie, show.genres?.first ?? '-'),
           _MetaItem(Icons.timer, '${show.runtime ?? '-'}m'),
-          _MetaItem(Icons.tv, '${show.network ?? '-'}'),
+          _MetaItem(Icons.tv, show.network?.name ?? '-'),
         ],
       ),
     );
