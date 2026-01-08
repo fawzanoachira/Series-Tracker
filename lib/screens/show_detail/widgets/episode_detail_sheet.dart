@@ -6,7 +6,7 @@ import 'package:series_tracker/models/tvmaze/show_image.dart';
 
 class EpisodeDetailSheet extends StatefulWidget {
   final Episode episode;
-  final List<ShowImage>? showImages; // banner images for fallback
+  final List<ShowImage>? showImages;
 
   const EpisodeDetailSheet({
     super.key,
@@ -19,168 +19,150 @@ class EpisodeDetailSheet extends StatefulWidget {
 }
 
 class _EpisodeDetailSheetState extends State<EpisodeDetailSheet> {
-  bool showFullSummary = false;
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(20),
-        ),
-      ),
+    return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           _dragHandle(),
           const SizedBox(height: 12),
-          _episodeImage(),
+          _imageSection(),
           const SizedBox(height: 12),
-          _episodeTitle(context),
-          const SizedBox(height: 6),
-          _episodeMeta(context),
+          _title(context),
+          const SizedBox(height: 4),
+          _meta(context),
           const SizedBox(height: 12),
-          _episodeSummary(context),
+          _summary(context),
         ],
       ),
     );
   }
 
   Widget _dragHandle() {
-    return Center(
-      child: Container(
-        width: 40,
-        height: 4,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade600,
-          borderRadius: BorderRadius.circular(8),
-        ),
+    return Container(
+      width: 40,
+      height: 4,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade600,
+        borderRadius: BorderRadius.circular(8),
       ),
     );
   }
 
-  Widget _episodeImage() {
-    final imageUrl = widget.episode.image?.medium;
+  Widget _imageSection() {
+    final episodeImage = widget.episode.image?.medium;
 
-    if (imageUrl != null) {
+    // 1️⃣ Episode image (preferred)
+    if (episodeImage != null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Image.network(
-          imageUrl,
-          fit: BoxFit.cover,
+          episodeImage,
+          height: 150,
           width: double.infinity,
-          height: 160, // less dominant
+          fit: BoxFit.cover,
         ),
       );
     }
 
-    // fallback: blurred banner
-    if (widget.showImages != null && widget.showImages!.isNotEmpty) {
-      final bannerUrl = widget.showImages!.first.url;
+    // 2️⃣ Blurred show banner fallback
+    final fallback =
+        widget.showImages?.isNotEmpty == true ? widget.showImages!.first : null;
+
+    if (fallback != null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Stack(
           children: [
             Image.network(
-              bannerUrl,
+              fallback.url, // ✅ FIXED
+              height: 150,
               width: double.infinity,
-              height: 160,
               fit: BoxFit.cover,
             ),
             Positioned.fill(
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Container(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withOpacity(0.35),
                 ),
               ),
             ),
-            const Center(
-              child: Icon(
-                Icons.tv,
-                color: Colors.white54,
-                size: 48,
+            const Positioned.fill(
+              child: Center(
+                child: Icon(
+                  Icons.tv,
+                  size: 48,
+                  color: Colors.white70,
+                ),
               ),
             ),
           ],
         ),
       );
-        }
+    }
 
-    // fallback empty container
+    // 3️⃣ Absolute fallback
     return SizedBox(
-      height: 160,
+      height: 150,
       child: Center(
         child: Icon(
           Icons.tv,
-          size: 48,
+          size: 40,
           color: Colors.grey.shade600,
         ),
       ),
     );
   }
 
-  Widget _episodeTitle(BuildContext context) {
+  Widget _title(BuildContext context) {
     return Text(
       widget.episode.name ?? 'Episode',
+      textAlign: TextAlign.center,
       style: Theme.of(context).textTheme.titleLarge,
-      textAlign: TextAlign.center,
     );
   }
 
-  Widget _episodeMeta(BuildContext context) {
+  Widget _meta(BuildContext context) {
     return Text(
-      'Season ${widget.episode.season} · Episode ${widget.episode.number} · ${widget.episode.runtime ?? "-"} min',
+      'Season ${widget.episode.season} · Episode ${widget.episode.number} · ${widget.episode.runtime ?? '-'} min',
       style: Theme.of(context).textTheme.bodySmall,
-      textAlign: TextAlign.center,
     );
   }
 
-  Widget _episodeSummary(BuildContext context) {
-    final summary = widget.episode.summary?.replaceAll(RegExp(r'<[^>]*>'), '');
+  Widget _summary(BuildContext context) {
+    final raw = widget.episode.summary;
+    if (raw == null || raw.isEmpty) return const SizedBox();
 
-    if (summary == null || summary.isEmpty) return const SizedBox();
+    final text = raw.replaceAll(RegExp(r'<[^>]*>'), '');
+    const limit = 140;
 
-    const previewLength = 120;
-
-    if (summary.length <= previewLength) {
-      return Text(summary, style: Theme.of(context).textTheme.bodyMedium);
-    }
+    final visibleText = _expanded || text.length <= limit
+        ? text
+        : '${text.substring(0, limit)}…';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AnimatedCrossFade(
-          firstChild: Text(
-            '${summary.substring(0, previewLength)}...',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          secondChild: Text(
-            summary,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          crossFadeState: showFullSummary
-              ? CrossFadeState.showSecond
-              : CrossFadeState.showFirst,
-          duration: const Duration(milliseconds: 300),
-        ),
-        const SizedBox(height: 6),
-        GestureDetector(
-          onTap: () {
-            setState(() {
-              showFullSummary = !showFullSummary;
-            });
-          },
-          child: Text(
-            showFullSummary ? 'Show less' : 'Read more',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
+        Text(visibleText),
+        if (text.length > limit)
+          GestureDetector(
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                _expanded ? 'Show less' : 'Read more',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
-        ),
       ],
     );
   }
