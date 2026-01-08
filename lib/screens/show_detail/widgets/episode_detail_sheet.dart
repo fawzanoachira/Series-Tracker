@@ -22,6 +22,9 @@ class EpisodeDetailSheet extends StatefulWidget {
 }
 
 class _EpisodeDetailSheetState extends State<EpisodeDetailSheet> {
+  bool _expanded = false;
+  static const double _dotsHeight = 38;
+
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
@@ -40,7 +43,7 @@ class _EpisodeDetailSheetState extends State<EpisodeDetailSheet> {
             const SizedBox(height: 4),
             _meta(context),
             const SizedBox(height: 12),
-            _summaryScrollable(),
+            _summary(context),
           ],
         ),
       ),
@@ -132,15 +135,49 @@ class _EpisodeDetailSheetState extends State<EpisodeDetailSheet> {
     );
   }
 
-  Widget _summaryScrollable() {
+  Widget _summary(BuildContext context) {
     final raw = widget.episode.summary;
     if (raw == null || raw.isEmpty) return const SizedBox();
 
     final text = raw.replaceAll(RegExp(r'<[^>]*>'), '');
+    final bool showToggle = text.length > 140;
 
     return Expanded(
-      child: SingleChildScrollView(
-        child: Text(text),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: _dotsHeight),
+        child: SingleChildScrollView(
+          physics: _expanded
+              ? const BouncingScrollPhysics()
+              : const NeverScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // The summary text
+              Text(
+                _expanded || !showToggle
+                    ? text
+                    : '${text.substring(0, 140)}...', // truncate if not expanded
+                softWrap: true,
+              ),
+
+              // Read more / Show less toggle
+              if (showToggle)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _expanded = !_expanded),
+                    child: Text(
+                      _expanded ? 'Show less' : 'Read more',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
