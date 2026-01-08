@@ -7,7 +7,7 @@ class FadeScaleRoute<T> extends PageRouteBuilder<T> {
       : super(
           opaque: false,
           barrierDismissible: true,
-          barrierColor: Colors.black.withOpacity(0.85),
+          barrierColor: Colors.black.withAlpha((0.85 * 255).round()),
           transitionDuration: const Duration(milliseconds: 260),
           reverseTransitionDuration: const Duration(milliseconds: 220),
           pageBuilder: (_, __, ___) => page,
