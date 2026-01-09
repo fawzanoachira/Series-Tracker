@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:series_tracker/config/color/color.dart';
-import 'package:series_tracker/screens/home/home_screen.dart';
+import 'package:series_tracker/screens/search_screen/search_screen.dart';
+import 'package:series_tracker/screens/search_screen/search_screen_view.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
               style: ButtonStyle(iconColor: WidgetStatePropertyAll(iconColor))),
           bottomAppBarTheme: BottomAppBarThemeData(color: appBarColor)),
       debugShowCheckedModeBanner: false,
-      home: const HomeScreen(),
+      home: const SearchScreen(),
     );
   }
 }

@@ -1,0 +1,4 @@
+enum SearchScreenLayout {
+  list,
+  grid,
+}

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:series_tracker/models/tvmaze/show.dart';
-import 'package:series_tracker/screens/show_detail/show_detail_view.dart';
+import 'package:series_tracker/screens/show_detail_screen/show_detail_view.dart';
 
 class ShowDetailScreen extends StatelessWidget {
   final Show show;

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:series_tracker/models/tvmaze/search.dart';
-import 'package:series_tracker/screens/show_detail/show_detail_screen.dart';
+import 'package:series_tracker/screens/show_detail_screen/show_detail_screen.dart';
 
-class ShowTile extends StatelessWidget {
+class ShowListTile extends StatelessWidget {
   final Search search;
 
-  const ShowTile({super.key, required this.search});
+  const ShowListTile({super.key, required this.search});
 
   @override
   Widget build(BuildContext context) {

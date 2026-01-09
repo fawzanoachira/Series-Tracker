@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:series_tracker/models/tvmaze/search.dart';
-import 'package:series_tracker/screens/home/home_layout.dart';
-import 'package:series_tracker/screens/home/widgets/show_grid_tile.dart';
-import 'package:series_tracker/screens/home/widgets/show_tile.dart';
+import 'package:series_tracker/screens/search_screen/search_screen_layout.dart';
+import 'package:series_tracker/screens/search_screen/widgets/show_grid_tile.dart';
+import 'package:series_tracker/screens/search_screen/widgets/show_list_tile.dart';
 
 class ShowResultsView extends StatelessWidget {
   final List<Search> results;
-  final HomeLayout layout;
+  final SearchScreenLayout layout;
 
   const ShowResultsView({
     super.key,
@@ -16,7 +16,7 @@ class ShowResultsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (layout == HomeLayout.grid) {
+    if (layout == SearchScreenLayout.grid) {
       return SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Center(
@@ -42,7 +42,7 @@ class ShowResultsView extends StatelessWidget {
     return ListView.builder(
       itemCount: results.length,
       itemBuilder: (context, index) {
-        return ShowTile(search: results[index]);
+        return ShowListTile(search: results[index]);
       },
     );
   }

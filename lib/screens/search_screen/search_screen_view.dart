@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:series_tracker/api/tracker.dart';
 import 'package:series_tracker/models/tvmaze/search.dart';
-import 'package:series_tracker/screens/home/home_layout.dart';
-import 'package:series_tracker/screens/home/widgets/home_app_bar.dart';
-import 'package:series_tracker/screens/home/widgets/show_results_view.dart';
+import 'package:series_tracker/screens/search_screen/search_screen_layout.dart';
+import 'package:series_tracker/screens/search_screen/widgets/home_app_bar.dart';
+import 'package:series_tracker/screens/search_screen/widgets/show_results_view.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class SearchScreen extends StatefulWidget {
+  const SearchScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<SearchScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<SearchScreen> {
   final TextEditingController searchController = TextEditingController();
-  HomeLayout layout = HomeLayout.grid; // Hobi-style default
+  SearchScreenLayout layout = SearchScreenLayout.grid; // Hobi-style default
 
   List<Search> searchResults = [];
   bool isLoading = false;
@@ -52,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onToggleLayout: () {
           setState(() {
             layout =
-                layout == HomeLayout.grid ? HomeLayout.list : HomeLayout.grid;
+                layout == SearchScreenLayout.grid ? SearchScreenLayout.list : SearchScreenLayout.grid;
           });
         },
       ),

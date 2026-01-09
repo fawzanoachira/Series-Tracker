@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:series_tracker/models/tvmaze/show.dart';
-import 'package:series_tracker/screens/show_detail/widgets/show_actions.dart';
-import 'package:series_tracker/screens/show_detail/widgets/show_header.dart';
-import 'package:series_tracker/screens/show_detail/widgets/show_info.dart';
-import 'package:series_tracker/screens/show_detail/widgets/show_seasons_section.dart';
-import 'package:series_tracker/screens/show_detail/widgets/show_summary.dart';
+import 'package:series_tracker/screens/show_detail_screen/widgets/show_actions.dart';
+import 'package:series_tracker/screens/show_detail_screen/widgets/show_header.dart';
+import 'package:series_tracker/screens/show_detail_screen/widgets/show_info.dart';
+import 'package:series_tracker/screens/show_detail_screen/widgets/show_seasons_section.dart';
+import 'package:series_tracker/screens/show_detail_screen/widgets/show_summary.dart';
 
 class ShowDetailView extends StatelessWidget {
   final Show show;
