@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:series_tracker/config/color/color.dart';
-import 'package:series_tracker/screens/search_screen/search_screen.dart';
-import 'package:series_tracker/screens/search_screen/search_screen_view.dart';
+import 'package:series_tracker/screens/root/root_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -11,13 +10,22 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Laebun va Lahv',
       theme: ThemeData.dark(useMaterial3: true).copyWith(
-          appBarTheme: AppBarTheme(backgroundColor: appBarColor),
-          // scaffoldBackgroundColor: scaffoldColor,
-          iconButtonTheme: IconButtonThemeData(
-              style: ButtonStyle(iconColor: WidgetStatePropertyAll(iconColor))),
-          bottomAppBarTheme: BottomAppBarThemeData(color: appBarColor)),
+          scaffoldBackgroundColor: scaffoldColor,
+          colorScheme: const ColorScheme.dark(
+            primary: primaryColor,
+            secondary: secondaryColor,
+            surface: appBarColor,
+          ),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: appBarColor,
+            elevation: 0,
+          ),
+          iconTheme: const IconThemeData(color: iconColor),
+          bottomAppBarTheme: const BottomAppBarThemeData(
+            color: appBarColor,
+          )),
       debugShowCheckedModeBanner: false,
-      home: const SearchScreen(),
+      home: const RootScreen(),
     );
   }
 }
