@@ -14,8 +14,8 @@ class ShowSeasonsSection extends StatelessWidget {
       future: getSeasons(showId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(16),
+          return const Center(
+            // padding: EdgeInsets.all(16),
             child: CircularProgressIndicator(),
           );
         }
