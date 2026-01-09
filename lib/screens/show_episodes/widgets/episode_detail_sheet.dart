@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:series_tracker/models/tvmaze/episode.dart';
 import 'package:series_tracker/models/tvmaze/show_image.dart';
 import 'package:series_tracker/navigation/fade_scale_route.dart';
-import 'package:series_tracker/screens/show_detail/widgets/episode_image_viewer.dart';
+import 'package:series_tracker/screens/show_episodes/widgets/episode_image_viewer.dart';
 import 'package:series_tracker/utils/image_preoloader.dart';
 import 'package:series_tracker/widgets/cached_image.dart';
 

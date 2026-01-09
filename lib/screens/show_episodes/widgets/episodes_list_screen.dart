@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:series_tracker/api/tracker.dart';
 import 'package:series_tracker/models/tvmaze/episode.dart';
 import 'package:series_tracker/models/tvmaze/season.dart';
-import 'package:series_tracker/screens/show_detail/widgets/episode_carousel_sheet.dart';
+import 'package:series_tracker/screens/show_episodes/widgets/episode_carousel_sheet.dart';
 
-class ShowEpisodesScreen extends StatelessWidget {
+class EpisodesListScreen extends StatelessWidget {
   final Season season;
 
-  const ShowEpisodesScreen({super.key, required this.season});
+  const EpisodesListScreen({super.key, required this.season});
 
   @override
   Widget build(BuildContext context) {

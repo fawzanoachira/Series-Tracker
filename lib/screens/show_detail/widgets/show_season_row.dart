@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:series_tracker/models/tvmaze/season.dart';
-import 'package:series_tracker/screens/show_detail/widgets/show_episodes_screen.dart';
+import 'package:series_tracker/screens/show_episodes/show_episodes.dart';
 
 class ShowSeasonRow extends StatelessWidget {
   final List<Season> seasons;
@@ -25,7 +25,7 @@ class ShowSeasonRow extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => ShowEpisodesScreen(season: season),
+                builder: (_) => ShowEpisodesView(season: season),
               ),
             );
           },
