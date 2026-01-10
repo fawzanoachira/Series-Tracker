@@ -5,6 +5,7 @@ import 'package:series_tracker/api/api.dart';
 import 'package:series_tracker/models/tvmaze/episode.dart';
 import 'package:series_tracker/models/tvmaze/search.dart';
 import 'package:series_tracker/models/tvmaze/season.dart';
+import 'package:series_tracker/models/tvmaze/show.dart';
 import 'package:series_tracker/models/tvmaze/show_image.dart';
 
 final dio = Dio(baseOptions);
@@ -50,5 +51,15 @@ Future<List<Episode>> getEpisodes(int seasonId) async {
   } catch (e) {
     log(e.toString());
     return [];
+  }
+}
+
+Future<Show> getShow(int showId) async {
+  try {
+    final response = await dio.get('/shows/$showId');
+    log(response.data.toString());
+    return Show.fromJson(response.data);
+  } catch (e) {
+    rethrow;
   }
 }
