@@ -1,26 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:series_tracker/models/tvmaze/show.dart';
+import 'package:series_tracker/providers/is_show_tracked_provider.dart';
+import 'package:series_tracker/providers/tracking_actions_provider.dart';
 
-class ShowActions extends StatelessWidget {
+class ShowActions extends ConsumerWidget {
   final Show show;
 
   const ShowActions({super.key, required this.show});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final showId = show.id!;
+
+    final isTrackedAsync = ref.watch(isShowTrackedProvider(showId));
+    final actionState = ref.watch(trackingActionsProvider);
+
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () {
-                // save to local storage (Hive / SharedPreferences)
-              },
-              child: const Text("Track Show"),
-            ),
-          ),
-        ],
+      child: isTrackedAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Text('Error: $e'),
+        data: (isTracked) {
+          return Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: actionState.isLoading
+                      ? null
+                      : () {
+                          final actions =
+                              ref.read(trackingActionsProvider.notifier);
+
+                          if (isTracked) {
+                            actions.removeShow(showId);
+                          } else {
+                            actions.addShow(show);
+                          }
+                        },
+                  child: actionState.isLoading
+                      ? const CircularProgressIndicator()
+                      : Text(isTracked ? 'Untrack Show' : 'Track Show'),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
