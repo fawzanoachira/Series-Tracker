@@ -3,9 +3,10 @@ import 'package:series_tracker/models/tvmaze/season.dart';
 import 'package:series_tracker/screens/show_episodes_screen/show_episodes_view.dart';
 
 class ShowSeasonRow extends StatelessWidget {
+  final int showId;
   final List<Season> seasons;
 
-  const ShowSeasonRow({super.key, required this.seasons});
+  const ShowSeasonRow({super.key, required this.seasons, required this.showId});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +26,10 @@ class ShowSeasonRow extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => ShowEpisodesView(season: season),
+                builder: (_) => ShowEpisodesView(
+                  season: season,
+                  showId: showId,
+                ),
               ),
             );
           },

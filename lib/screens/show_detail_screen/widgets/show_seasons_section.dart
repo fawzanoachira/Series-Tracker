@@ -34,7 +34,10 @@ class ShowSeasonsSection extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
-            ShowSeasonRow(seasons: snapshot.data!),
+            ShowSeasonRow(
+              seasons: snapshot.data!,
+              showId: showId,
+            ),
           ],
         );
       },

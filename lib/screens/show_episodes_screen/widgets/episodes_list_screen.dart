@@ -5,9 +5,11 @@ import 'package:series_tracker/models/tvmaze/season.dart';
 import 'package:series_tracker/screens/show_episodes_screen/widgets/episode_carousel_sheet.dart';
 
 class EpisodesListScreen extends StatelessWidget {
+  final int showId;
   final Season season;
 
-  const EpisodesListScreen({super.key, required this.season});
+  const EpisodesListScreen(
+      {super.key, required this.showId, required this.season});
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +38,7 @@ class EpisodesListScreen extends StatelessWidget {
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
                       builder: (_) => EpisodeCarouselSheet(
+                        showId: showId,
                         episodes: episodes, // all episodes of that season
                         initialIndex: index, // the one that was tapped
                         // showImages: showImages, // pass show banner images
