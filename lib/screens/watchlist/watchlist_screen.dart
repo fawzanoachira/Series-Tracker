@@ -15,7 +15,7 @@ class WatchlistScreen extends ConsumerStatefulWidget {
 }
 
 class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
-  WatchlistView _view = WatchlistView.grid;
+  WatchlistView _view = WatchlistView.list;
 
   @override
   Widget build(BuildContext context) {
