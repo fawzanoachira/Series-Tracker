@@ -4,8 +4,17 @@ import 'package:series_tracker/providers/episode_tracking_revision_provider.dart
 import 'package:series_tracker/providers/is_show_tracked_provider.dart';
 import 'core_providers.dart';
 import 'tracked_shows_provider.dart';
-// import 'episode_progress_provider.dart';
-// import 'is_episode_watched_provider.dart';
+
+/// Checks if a show should be marked as completed and updates it automatically
+Future<void> _checkAndUpdateShowStatus(Ref ref, int showId) async {
+  try {
+    final repo = ref.read(trackingRepositoryProvider);
+    await repo.checkAndUpdateShowCompletion(showId);
+    ref.invalidate(trackedShowsProvider);
+  } catch (e) {
+    // Silently fail - this is a background check
+  }
+}
 
 class TrackingActions extends AsyncNotifier<void> {
   @override
@@ -42,6 +51,7 @@ class TrackingActions extends AsyncNotifier<void> {
       state = AsyncError(e, st);
     }
   }
+
   // ---------------- EPISODES ----------------
 
   Future<void> markEpisodeWatched({
@@ -58,6 +68,9 @@ class TrackingActions extends AsyncNotifier<void> {
     );
 
     ref.read(episodeTrackingRevisionProvider.notifier).state++;
+
+    // Check if show should be marked as completed
+    await _checkAndUpdateShowStatus(ref, showId);
   }
 
   Future<void> markEpisodeUnwatched({
@@ -74,6 +87,9 @@ class TrackingActions extends AsyncNotifier<void> {
     );
 
     ref.read(episodeTrackingRevisionProvider.notifier).state++;
+
+    // Check if show should be moved back to watching
+    await _checkAndUpdateShowStatus(ref, showId);
   }
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:series_tracker/screens/search_screen/search_screen.dart';
 import 'package:series_tracker/navigation/bottom_app_bar.dart';
 import 'package:series_tracker/screens/watchlist/watchlist_screen.dart';
+import 'package:series_tracker/screens/my_shows/my_shows_screen.dart';
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
@@ -11,11 +12,11 @@ class RootScreen extends StatefulWidget {
 }
 
 class _RootScreenState extends State<RootScreen> {
-  int _currentIndex = 0; // Discovery default
+  int _currentIndex = 0; // Watchlist default
 
   late final List<Widget> _screens = [
     const WatchlistScreen(),
-    const _PlaceholderScreen(title: 'My Shows'),
+    const MyShowsScreen(), // All tracked shows (watching, completed, dropped)
     const SearchScreen(), // Discovery
     const _PlaceholderScreen(title: 'Analytics'),
   ];

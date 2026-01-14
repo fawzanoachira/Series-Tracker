@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:series_tracker/api/tracker.dart' as tracker;
-import 'package:series_tracker/models/tvmaze/episode.dart' as tracker;
 import 'package:series_tracker/models/tvmaze/season.dart';
-import 'package:series_tracker/providers/tracking_actions_provider.dart';
+import 'package:series_tracker/providers/core_providers.dart';
+import 'package:series_tracker/providers/episode_tracking_revision_provider.dart';
+import 'package:series_tracker/providers/tracked_shows_provider.dart';
 import 'package:series_tracker/providers/episode_progress_provider.dart';
 import 'package:series_tracker/screens/show_episodes_screen/show_episodes_view.dart';
 
@@ -91,27 +92,33 @@ class _SeasonListTileState extends ConsumerState<_SeasonListTile> {
         _isLoading = true;
       });
 
-      final actions = ref.read(trackingActionsProvider.notifier);
+      // Prepare episodes list for batch operation
+      final episodesList = episodes
+          .map((ep) => (season: ep.season ?? 0, episode: ep.number ?? 0))
+          .toList();
+
+      final repo = ref.read(trackingRepositoryProvider);
 
       if (isFullyWatched) {
-        // Mark all as unwatched
-        for (final ep in episodes) {
-          await actions.markEpisodeUnwatched(
-            showId: widget.showId,
-            season: ep.season ?? 0,
-            episode: ep.number ?? 0,
-          );
-        }
+        // Batch unmark all episodes
+        await repo.markMultipleEpisodesUnwatched(
+          showId: widget.showId,
+          episodes: episodesList,
+        );
       } else {
-        // Mark all as watched
-        for (final ep in episodes) {
-          await actions.markEpisodeWatched(
-            showId: widget.showId,
-            season: ep.season ?? 0,
-            episode: ep.number ?? 0,
-          );
-        }
+        // Batch mark all episodes as watched
+        await repo.markMultipleEpisodesWatched(
+          showId: widget.showId,
+          episodes: episodesList,
+        );
       }
+
+      // Trigger UI refresh
+      ref.read(episodeTrackingRevisionProvider.notifier).state++;
+
+      // Check show completion status
+      await repo.checkAndUpdateShowCompletion(widget.showId);
+      ref.invalidate(trackedShowsProvider);
 
       // Clear optimistic state after completion
       if (mounted) {
@@ -156,7 +163,7 @@ class _SeasonListTileState extends ConsumerState<_SeasonListTile> {
             ),
             error: (_, __) => const SizedBox(width: 48),
             data: (watchedEpisodes) {
-              return FutureBuilder<List<tracker.Episode>>(
+              return FutureBuilder(
                 future: tracker.getEpisodes(widget.season.id!),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
@@ -172,7 +179,9 @@ class _SeasonListTileState extends ConsumerState<_SeasonListTile> {
 
                   final actualWatched = episodes.isNotEmpty &&
                       episodes.every((ep) {
-                        final key = '${ep.season ?? 0}-${ep.number ?? 0}';
+                        final season = ep.season ?? 0;
+                        final number = ep.number ?? 0;
+                        final key = '$season-$number';
                         return watchedSet.contains(key);
                       });
 
