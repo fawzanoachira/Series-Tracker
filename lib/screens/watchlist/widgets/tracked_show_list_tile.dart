@@ -17,7 +17,7 @@ class TrackedShowListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final progressAsync = ref.watch(episodeProgressProvider(show.showId));
+    final watchedAsync = ref.watch(episodeProgressProvider(show.showId));
     final nextAsync = ref.watch(nextEpisodeProvider(show.showId));
 
     final theme = Theme.of(context);
@@ -25,9 +25,8 @@ class TrackedShowListTile extends ConsumerWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      elevation: 1.5,
-      shadowColor: colorScheme.shadow.withValues(alpha: 0.15),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 1.5,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
@@ -50,159 +49,107 @@ class TrackedShowListTile extends ConsumerWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Poster + subtle overlay gradient
+            /// Poster
             SizedBox(
               width: 86,
               height: 120,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  show.posterUrl != null
-                      ? Image.network(
-                          show.posterUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _placeholderPoster(),
-                        )
-                      : _placeholderPoster(),
-                  // Optional subtle gradient overlay (looks modern)
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.35),
-                          ],
-                          stops: const [0.6, 1.0],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              child: Image.network(
+                show.posterUrl ?? '',
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _placeholderPoster(),
               ),
             ),
 
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title – bold + better typography
-                    Text(
-                      show.name,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.2,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                child: watchedAsync.when(
+                  data: (watchedEpisodes) {
+                    if (watchedEpisodes.isEmpty) {
+                      return _emptyProgress(theme, colorScheme);
+                    }
 
-                    const SizedBox(height: 6),
+                    /// Assume last item is latest watched
+                    final lastWatched = watchedEpisodes.last;
+                    final watchedCount = watchedEpisodes.length;
 
-                    // Progress row
-                    progressAsync.when(
-                      data: (watchedEpisodes) {
-                        final count = watchedEpisodes.length;
-                        // You could also get total episodes from show model if available
-                        // For now we just show watched count
+                    return nextAsync.when(
+                      data: (next) {
+                        final totalEpisodes =
+                            next == null ? watchedCount : watchedCount + 1;
+                        final progress =
+                            watchedCount / totalEpisodes.clamp(1, 999);
+
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Text(
-                                  '$count episodes watched',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                // Tiny progress chip (optional – looks nice)
-                                if (count > 0)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: colorScheme.primaryContainer,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      '$count',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: colorScheme.onPrimaryContainer,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            // Optional: tiny progress bar (uncomment if useful)
-                            // ClipRRect(
-                            //   borderRadius: BorderRadius.circular(4),
-                            //   child: LinearProgressIndicator(
-                            //     value: count / 24, // replace with real total
-                            //     minHeight: 4,
-                            //     backgroundColor: colorScheme.surfaceVariant,
-                            //   ),
-                            // ),
-                          ],
-                        );
-                      },
-                      loading: () => Text(
-                        'Loading progress…',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      error: (_, __) => Text(
-                        'Progress unavailable',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.error,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // Next episode – more prominent when available
-                    nextAsync.when(
-                      data: (next) {
-                        if (next == null) return const SizedBox.shrink();
-
-                        return Row(
-                          children: [
-                            Icon(
-                              Icons.play_circle_outline_rounded,
-                              size: 18,
-                              color: colorScheme.primary,
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                'Up next: S${next.season} • E${next.episode}',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.primary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            /// Title
+                            Text(
+                              show.name,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
                               ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
+
+                            const SizedBox(height: 6),
+
+                            /// Last watched episode
+                            Text(
+                              'S${lastWatched.season} • '
+                              'E${lastWatched.episode}',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            /// Custom mould progress bar
+                            _MouldProgressBar(
+                              progress: progress,
+                              colorScheme: colorScheme,
+                            ),
+
+                            const SizedBox(height: 10),
+
+                            /// Up next
+                            if (next != null)
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.play_circle_outline_rounded,
+                                    size: 18,
+                                    color: colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Up next: S${next.season} • '
+                                      'E${next.episode}',
+                                      style:
+                                          theme.textTheme.bodyMedium?.copyWith(
+                                        color: colorScheme.primary,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
                           ],
                         );
                       },
-                      loading: () => const SizedBox.shrink(),
-                      error: (_, __) => const SizedBox.shrink(),
-                    ),
-                  ],
+                      loading: () => _loading(theme, colorScheme),
+                      error: (_, __) => _error(theme, colorScheme),
+                    );
+                  },
+                  loading: () => _loading(theme, colorScheme),
+                  error: (_, __) => _error(theme, colorScheme),
                 ),
               ),
             ),
@@ -215,10 +162,61 @@ class TrackedShowListTile extends ConsumerWidget {
   Widget _placeholderPoster() {
     return Container(
       color: Colors.grey.shade800,
-      child: const Icon(
-        Icons.tv_rounded,
-        size: 36,
-        color: Colors.white54,
+      child: const Icon(Icons.tv_rounded, color: Colors.white54),
+    );
+  }
+
+  Widget _loading(ThemeData theme, ColorScheme scheme) {
+    return Text(
+      'Loading progress…',
+      style:
+          theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+    );
+  }
+
+  Widget _error(ThemeData theme, ColorScheme scheme) {
+    return Text(
+      'Progress unavailable',
+      style: theme.textTheme.bodySmall?.copyWith(color: scheme.error),
+    );
+  }
+
+  Widget _emptyProgress(ThemeData theme, ColorScheme scheme) {
+    return Text(
+      'No episodes watched yet',
+      style:
+          theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+    );
+  }
+}
+
+/// 🔥 Custom mould-style progress bar
+class _MouldProgressBar extends StatelessWidget {
+  final double progress;
+  final ColorScheme colorScheme;
+
+  const _MouldProgressBar({
+    required this.progress,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 8,
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: FractionallySizedBox(
+        alignment: Alignment.centerLeft,
+        widthFactor: progress.clamp(0.0, 1.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: colorScheme.primary,
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
       ),
     );
   }
