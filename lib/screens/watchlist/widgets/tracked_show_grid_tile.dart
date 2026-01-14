@@ -69,22 +69,34 @@ class TrackedShowGridTile extends ConsumerWidget {
 
           const SizedBox(height: 4),
 
-          // Progress
+          // Progress with episode count
           progressAsync.when(
             data: (episodes) {
-              return LinearProgressIndicator(
-                value: episodes.isEmpty ? 0 : null,
-                minHeight: 4,
+              return Text(
+                '${episodes.length} watched',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Colors.grey[600],
+                    ),
               );
             },
             loading: () => const SizedBox(height: 4),
             error: (_, __) => const SizedBox(height: 4),
           ),
 
+          const SizedBox(height: 2),
+
           // Up next
           nextAsync.when(
             data: (next) {
-              if (next == null) return const SizedBox.shrink();
+              if (next == null) {
+                return Text(
+                  'All caught up! 🎉',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Colors.green,
+                        fontWeight: FontWeight.w500,
+                      ),
+                );
+              }
               return Text(
                 'Up next: S${next.season}E${next.episode}',
                 style: Theme.of(context).textTheme.labelSmall,

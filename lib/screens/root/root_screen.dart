@@ -11,7 +11,7 @@ class RootScreen extends StatefulWidget {
 }
 
 class _RootScreenState extends State<RootScreen> {
-  int _currentIndex = 1; // Discovery default
+  int _currentIndex = 0; // Discovery default
 
   late final List<Widget> _screens = [
     const WatchlistScreen(),
