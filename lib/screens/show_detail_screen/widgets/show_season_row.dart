@@ -113,12 +113,15 @@ class _SeasonListTileState extends ConsumerState<_SeasonListTile> {
         );
       }
 
-      // Trigger UI refresh
-      ref.read(episodeTrackingRevisionProvider.notifier).state++;
+      // Trigger UI refresh for THIS show only
+      ref.read(episodeTrackingRevisionProvider(widget.showId).notifier).state++;
 
-      // Check show completion status
-      await repo.checkAndUpdateShowCompletion(widget.showId);
-      ref.invalidate(trackedShowsProvider);
+      // Check show completion status and only refresh if status changed
+      final statusChanged =
+          await repo.checkAndUpdateShowCompletion(widget.showId);
+      if (statusChanged) {
+        ref.invalidate(trackedShowsProvider);
+      }
 
       // Clear optimistic state after completion
       if (mounted) {

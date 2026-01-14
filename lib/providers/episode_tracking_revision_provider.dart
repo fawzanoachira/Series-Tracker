@@ -1,3 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final episodeTrackingRevisionProvider = StateProvider<int>((ref) => 0);
+/// Per-show revision tracking instead of global
+/// This prevents all shows from refetching when one show's episodes change
+final episodeTrackingRevisionProvider =
+    StateProvider.family<int, int>((ref, showId) => 0);

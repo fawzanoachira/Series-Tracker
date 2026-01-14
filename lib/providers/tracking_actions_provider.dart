@@ -5,17 +5,6 @@ import 'package:series_tracker/providers/is_show_tracked_provider.dart';
 import 'core_providers.dart';
 import 'tracked_shows_provider.dart';
 
-/// Checks if a show should be marked as completed and updates it automatically
-Future<void> _checkAndUpdateShowStatus(Ref ref, int showId) async {
-  try {
-    final repo = ref.read(trackingRepositoryProvider);
-    await repo.checkAndUpdateShowCompletion(showId);
-    ref.invalidate(trackedShowsProvider);
-  } catch (e) {
-    // Silently fail - this is a background check
-  }
-}
-
 class TrackingActions extends AsyncNotifier<void> {
   @override
   Future<void> build() async {
@@ -67,10 +56,11 @@ class TrackingActions extends AsyncNotifier<void> {
       episode: episode,
     );
 
-    ref.read(episodeTrackingRevisionProvider.notifier).state++;
+    // Increment only THIS show's revision counter
+    ref.read(episodeTrackingRevisionProvider(showId).notifier).state++;
 
     // Check if show should be marked as completed
-    await _checkAndUpdateShowStatus(ref, showId);
+    await _checkAndUpdateShowStatus(showId);
   }
 
   Future<void> markEpisodeUnwatched({
@@ -86,10 +76,27 @@ class TrackingActions extends AsyncNotifier<void> {
       episode: episode,
     );
 
-    ref.read(episodeTrackingRevisionProvider.notifier).state++;
+    // Increment only THIS show's revision counter
+    ref.read(episodeTrackingRevisionProvider(showId).notifier).state++;
 
     // Check if show should be moved back to watching
-    await _checkAndUpdateShowStatus(ref, showId);
+    await _checkAndUpdateShowStatus(showId);
+  }
+
+  /// Checks if a show should be marked as completed and updates it automatically
+  Future<void> _checkAndUpdateShowStatus(int showId) async {
+    try {
+      final repo = ref.read(trackingRepositoryProvider);
+      final bool statusChanged =
+          await repo.checkAndUpdateShowCompletion(showId);
+
+      // Only invalidate if status actually changed
+      if (statusChanged == true) {
+        ref.invalidate(trackedShowsProvider);
+      }
+    } catch (e) {
+      // Silently fail - this is a background check
+    }
   }
 }
 

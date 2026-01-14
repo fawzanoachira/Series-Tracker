@@ -21,7 +21,7 @@ class TrackingRepository {
   Future<void> addShow(Show show) async {
     final trackedShow = TrackedShow(
       showId: show.id!,
-      name: show.name ?? 'Unknown Show', // Handle nullable name
+      name: show.name ?? 'Unknown Show',
       posterUrl: show.image?.medium,
       status: TrackedShowStatus.watching,
       addedAt: DateTime.now(),
@@ -119,12 +119,12 @@ class TrackingRepository {
   }
 
   // -------- Auto-completion Check --------
-  Future<void> checkAndUpdateShowCompletion(int showId) async {
+  Future<bool> checkAndUpdateShowCompletion(int showId) async {
     try {
       // Get the tracked show
       final trackedShow = await _showDao.getShow(showId);
 
-      if (trackedShow == null) return;
+      if (trackedShow == null) return false;
 
       // Get all episodes for the show from API
       final seasons = await tracker.getSeasons(showId);
@@ -137,7 +137,7 @@ class TrackingRepository {
         }
       }
 
-      if (allEpisodes.isEmpty) return;
+      if (allEpisodes.isEmpty) return false;
 
       // Get watched episodes from database
       final watchedEpisodes = await _episodeDao.getEpisodesForShow(showId);
@@ -155,13 +155,18 @@ class TrackingRepository {
       // Update status based on completion
       if (allWatched && trackedShow.status != TrackedShowStatus.completed) {
         await _showDao.updateStatus(showId, TrackedShowStatus.completed);
+        return true; // ✅ Status changed to completed
       } else if (!allWatched &&
           trackedShow.status == TrackedShowStatus.completed) {
         // If previously completed but now has unwatched episodes, move back to watching
         await _showDao.updateStatus(showId, TrackedShowStatus.watching);
+        return true; // ✅ Status changed to watching
       }
+
+      return false; // ✅ Status unchanged
     } catch (e) {
       // Silently fail - this is a background check
+      return false;
     }
   }
 }

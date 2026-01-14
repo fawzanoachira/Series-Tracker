@@ -22,8 +22,20 @@ class MyShowsScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (shows) {
           if (shows.isEmpty) {
-            return const Center(
-              child: Text('No shows tracked yet'),
+            return RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(trackedShowsProvider);
+                await ref.read(trackedShowsProvider.future);
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height - 200,
+                  child: const Center(
+                    child: Text('No shows tracked yet'),
+                  ),
+                ),
+              ),
             );
           }
 
@@ -38,34 +50,41 @@ class MyShowsScreen extends ConsumerWidget {
               .where((show) => show.status == TrackedShowStatus.dropped)
               .toList();
 
-          return CustomScrollView(
-            slivers: [
-              if (watchingShows.isNotEmpty) ...[
-                _SectionSliverHeader(
-                  title: 'Watching',
-                  count: watchingShows.length,
-                  color: Colors.blue,
-                ),
-                _buildGrid(watchingShows),
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(trackedShowsProvider);
+              await ref.read(trackedShowsProvider.future);
+            },
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                if (watchingShows.isNotEmpty) ...[
+                  _SectionSliverHeader(
+                    title: 'Watching',
+                    count: watchingShows.length,
+                    color: Colors.blue,
+                  ),
+                  _buildGrid(watchingShows),
+                ],
+                if (completedShows.isNotEmpty) ...[
+                  _SectionSliverHeader(
+                    title: 'Completed',
+                    count: completedShows.length,
+                    color: Colors.green,
+                  ),
+                  _buildGrid(completedShows),
+                ],
+                if (droppedShows.isNotEmpty) ...[
+                  _SectionSliverHeader(
+                    title: 'Dropped',
+                    count: droppedShows.length,
+                    color: Colors.grey,
+                  ),
+                  _buildGrid(droppedShows),
+                ],
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
               ],
-              if (completedShows.isNotEmpty) ...[
-                _SectionSliverHeader(
-                  title: 'Completed',
-                  count: completedShows.length,
-                  color: Colors.green,
-                ),
-                _buildGrid(completedShows),
-              ],
-              if (droppedShows.isNotEmpty) ...[
-                _SectionSliverHeader(
-                  title: 'Dropped',
-                  count: droppedShows.length,
-                  color: Colors.grey,
-                ),
-                _buildGrid(droppedShows),
-              ],
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-            ],
+            ),
           );
         },
       ),
@@ -77,11 +96,9 @@ class MyShowsScreen extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       sliver: SliverGrid(
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 180, // ← typical phone poster width
-          mainAxisExtent: 200, // 2:3 ratio + small shadow margin
+          maxCrossAxisExtent: 180,
+          mainAxisExtent: 200,
           childAspectRatio: 0.68,
-          // mainAxisSpacing: 12,
-          // crossAxisSpacing: 12,
         ),
         delegate: SliverChildBuilderDelegate(
           (context, index) => TrackedShowGridCard(show: shows[index]),
@@ -151,7 +168,6 @@ class _SectionSliverHeader extends StatelessWidget {
 }
 
 class TrackedShowGridCard extends StatelessWidget {
-  // ← No longer needs Riverpod/Consumer
   final TrackedShow show;
 
   const TrackedShowGridCard({super.key, required this.show});

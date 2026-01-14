@@ -5,7 +5,8 @@ import 'episode_tracking_revision_provider.dart';
 
 final episodeProgressProvider =
     FutureProvider.family<List<TrackedEpisode>, int>((ref, showId) async {
-  ref.watch(episodeTrackingRevisionProvider);
+  // Watch only THIS show's revision, not all shows
+  ref.watch(episodeTrackingRevisionProvider(showId));
 
   final repo = ref.read(trackingRepositoryProvider);
   return repo.getEpisodeProgress(showId);

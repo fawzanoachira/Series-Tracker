@@ -49,14 +49,32 @@ class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
               .toList();
 
           if (watchingShows.isEmpty) {
-            return const Center(
-              child: Text('No shows in watchlist'),
+            return RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(trackedShowsProvider);
+                await ref.read(trackedShowsProvider.future);
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height - 200,
+                  child: const Center(
+                    child: Text('No shows in watchlist'),
+                  ),
+                ),
+              ),
             );
           }
 
-          return _view == WatchlistView.grid
-              ? _WatchlistGrid(shows: watchingShows)
-              : _WatchlistList(shows: watchingShows);
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(trackedShowsProvider);
+              await ref.read(trackedShowsProvider.future);
+            },
+            child: _view == WatchlistView.grid
+                ? _WatchlistGrid(shows: watchingShows)
+                : _WatchlistList(shows: watchingShows),
+          );
         },
       ),
     );
