@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:series_tracker/api/tracker.dart' as tracker;
 import 'package:series_tracker/models/tracking/tracked_episode.dart';
@@ -11,6 +12,7 @@ import 'package:series_tracker/providers/show_progress_provider.dart';
 import 'package:series_tracker/providers/tracking_actions_provider.dart';
 import 'package:series_tracker/screens/show_detail_screen/show_detail_screen.dart';
 import 'package:series_tracker/screens/show_episodes_screen/widgets/episode_carousel_sheet.dart';
+import 'package:series_tracker/widgets/animations/drawn_checkmark.dart';
 
 /// --------------------------------------------
 /// Optimistic UI state for swipe → watched
@@ -147,6 +149,9 @@ class TrackedShowListTile extends ConsumerWidget {
 
         /// 1️⃣ Immediate UI feedback
         ref.read(_markingWatchedProvider(show.showId).notifier).state = true;
+
+        /// 🔔 Haptic feedback
+        HapticFeedback.mediumImpact();
 
         /// 2️⃣ Trigger update
         await _markNextEpisodeWatched(
@@ -332,16 +337,15 @@ class TrackedShowListTile extends ConsumerWidget {
   Widget _markedWatchedTile() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.green,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Stack(
+      child: Stack(
         alignment: Alignment.center,
         children: [
-          // Invisible layout replica (keeps exact size)
-          Row(
+          // Keeps exact tile size
+          const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(width: 90, height: 135),
@@ -350,11 +354,21 @@ class TrackedShowListTile extends ConsumerWidget {
             ],
           ),
 
-          // Perfectly centered tick
-          Icon(
-            Icons.check_rounded,
-            color: Colors.white,
-            size: 52,
+          // ✔ Tick pop
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.7, end: 1.0),
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutBack,
+            builder: (context, scale, child) {
+              return Transform.scale(
+                scale: scale,
+                child: child,
+              );
+            },
+            child: const DrawnCheckmark(
+              size: 80,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
