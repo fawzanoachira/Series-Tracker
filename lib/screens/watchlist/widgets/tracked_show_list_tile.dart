@@ -132,8 +132,8 @@ class TrackedShowListTile extends ConsumerWidget {
               gradient: LinearGradient(
                 colors: [
                   Colors.transparent,
-                  Colors.green.withOpacity(0.3),
-                  Colors.green.withOpacity(0.6),
+                  Colors.green.withValues(alpha: 0.3),
+                  Colors.green.withValues(alpha: 0.6),
                 ],
               ),
             ),
@@ -301,8 +301,9 @@ class TrackedShowListTile extends ConsumerWidget {
                             ),
                             nextAsync.when(
                               data: (next) {
-                                if (next == null)
+                                if (next == null) {
                                   return const SizedBox.shrink();
+                                }
                                 final remaining =
                                     progress.totalCount - progress.watchedCount;
                                 return Text(
@@ -348,7 +349,7 @@ class TrackedShowListTile extends ConsumerWidget {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.2),
+                          color: Colors.green.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Row(
