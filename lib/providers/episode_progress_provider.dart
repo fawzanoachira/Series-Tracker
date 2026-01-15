@@ -11,3 +11,10 @@ final episodeProgressProvider =
   final repo = ref.read(trackingRepositoryProvider);
   return repo.getEpisodeProgress(showId);
 });
+
+// Add this extension to make it easier to keep previous data
+extension KeepAliveExtension on Ref {
+  void keepAlive() {
+    onDispose(() {});
+  }
+}

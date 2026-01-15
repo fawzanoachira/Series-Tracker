@@ -9,7 +9,7 @@ import 'package:series_tracker/providers/next_episode_provider.dart';
 import 'package:series_tracker/providers/show_progress_provider.dart';
 import 'package:series_tracker/providers/tracking_actions_provider.dart';
 import 'package:series_tracker/screens/show_detail_screen/show_detail_screen.dart';
-import 'package:series_tracker/screens/show_episodes_screen/widgets/episode_detail_sheet.dart';
+import 'package:series_tracker/screens/show_episodes_screen/widgets/episode_carousel_sheet.dart';
 
 class TrackedShowListTile extends ConsumerWidget {
   final TrackedShow show;
@@ -27,6 +27,9 @@ class TrackedShowListTile extends ConsumerWidget {
     int episode,
   ) async {
     try {
+      // Fetch show images for blur fallback
+      final showImages = await tracker.fetchShowImages(showId);
+
       // Fetch all seasons to find the right one
       final seasons = await tracker.getSeasons(showId);
       final targetSeason = seasons.firstWhere(
@@ -44,14 +47,16 @@ class TrackedShowListTile extends ConsumerWidget {
 
       if (episodeIndex == -1) return;
 
-      // Show the episode detail sheet
+      // Show the episode carousel sheet with all season episodes
       if (context.mounted) {
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
-          builder: (_) => EpisodeDetailSheet(
+          builder: (_) => EpisodeCarouselSheet(
             showId: showId,
-            episode: episodes[episodeIndex],
+            episodes: episodes, // All episodes in the season
+            initialIndex: episodeIndex, // Start at the next episode
+            showImages: showImages,
           ),
         );
       }
@@ -97,7 +102,7 @@ class TrackedShowListTile extends ConsumerWidget {
     final nextAsync = ref.watch(nextEpisodeProvider(show.showId));
     final progressAsync = ref.watch(showProgressProvider(show.showId));
 
-    return nextAsync.when(
+    return nextAsync.maybeWhen(
       data: (next) {
         // Only make dismissible if there's a next episode
         if (next == null) {
@@ -165,7 +170,7 @@ class TrackedShowListTile extends ConsumerWidget {
           ),
         );
       },
-      loading: () => _buildTileContent(
+      orElse: () => _buildTileContent(
         context,
         ref,
         watchedAsync,
@@ -241,7 +246,7 @@ class TrackedShowListTile extends ConsumerWidget {
                 const SizedBox(height: 6),
 
                 // Last watched episode info
-                watchedAsync.when(
+                watchedAsync.maybeWhen(
                   data: (watchedEpisodes) {
                     if (watchedEpisodes.isEmpty) {
                       return const Text(
@@ -263,14 +268,14 @@ class TrackedShowListTile extends ConsumerWidget {
                       ),
                     );
                   },
-                  loading: () => const SizedBox.shrink(),
+                  orElse: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                 ),
 
                 const SizedBox(height: 10),
 
                 // Progress bar
-                progressAsync.when(
+                progressAsync.maybeWhen(
                   data: (progress) {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,7 +304,7 @@ class TrackedShowListTile extends ConsumerWidget {
                                 color: Colors.white54,
                               ),
                             ),
-                            nextAsync.when(
+                            nextAsync.maybeWhen(
                               data: (next) {
                                 if (next == null) {
                                   return const SizedBox.shrink();
@@ -314,7 +319,7 @@ class TrackedShowListTile extends ConsumerWidget {
                                   ),
                                 );
                               },
-                              loading: () => const SizedBox.shrink(),
+                              orElse: () => const SizedBox.shrink(),
                               error: (_, __) => const SizedBox.shrink(),
                             ),
                           ],
@@ -322,25 +327,14 @@ class TrackedShowListTile extends ConsumerWidget {
                       ],
                     );
                   },
-                  loading: () => ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: SizedBox(
-                      height: 6,
-                      child: LinearProgressIndicator(
-                        backgroundColor: Colors.grey[800],
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFF8B5CF6),
-                        ),
-                      ),
-                    ),
-                  ),
+                  orElse: () => const SizedBox(height: 6),
                   error: (_, __) => const SizedBox.shrink(),
                 ),
 
                 const SizedBox(height: 10),
 
                 // View Next Button
-                nextAsync.when(
+                nextAsync.maybeWhen(
                   data: (next) {
                     if (next == null) {
                       return Container(
@@ -407,7 +401,7 @@ class TrackedShowListTile extends ConsumerWidget {
                       ),
                     );
                   },
-                  loading: () => const SizedBox.shrink(),
+                  orElse: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                 ),
               ],
