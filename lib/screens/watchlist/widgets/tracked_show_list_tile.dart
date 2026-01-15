@@ -12,6 +12,12 @@ import 'package:series_tracker/providers/tracking_actions_provider.dart';
 import 'package:series_tracker/screens/show_detail_screen/show_detail_screen.dart';
 import 'package:series_tracker/screens/show_episodes_screen/widgets/episode_carousel_sheet.dart';
 
+/// --------------------------------------------
+/// Optimistic UI state for swipe → watched
+/// --------------------------------------------
+final _markingWatchedProvider =
+    StateProvider.family<bool, int>((ref, showId) => false);
+
 class TrackedShowListTile extends ConsumerWidget {
   final TrackedShow show;
 
@@ -20,9 +26,9 @@ class TrackedShowListTile extends ConsumerWidget {
     required this.show,
   });
 
-  // ----------------------------
+  // ------------------------------------------------
   // Navigation
-  // ----------------------------
+  // ------------------------------------------------
 
   void _navigateToShowDetail(BuildContext context) {
     final showModel = Show(
@@ -41,13 +47,12 @@ class TrackedShowListTile extends ConsumerWidget {
     );
   }
 
-  // ----------------------------
+  // ------------------------------------------------
   // Episode Sheet
-  // ----------------------------
+  // ------------------------------------------------
 
   Future<void> _showNextEpisodeSheet(
     BuildContext context,
-    WidgetRef ref,
     int showId,
     int season,
     int episode,
@@ -76,14 +81,12 @@ class TrackedShowListTile extends ConsumerWidget {
           showImages: showImages,
         ),
       );
-    } catch (_) {
-      // Silent fail
-    }
+    } catch (_) {}
   }
 
-  // ----------------------------
+  // ------------------------------------------------
   // Mark watched
-  // ----------------------------
+  // ------------------------------------------------
 
   Future<void> _markNextEpisodeWatched(
     WidgetRef ref,
@@ -98,14 +101,12 @@ class TrackedShowListTile extends ConsumerWidget {
         );
   }
 
-  // ----------------------------
+  // ------------------------------------------------
   // Build
-  // ----------------------------
+  // ------------------------------------------------
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // ✅ Optional UX improvement:
-    // Only rebuild when actual value changes (not loading/error)
     final watched = ref.watch(
       episodeProgressProvider(show.showId).select((a) => a.valueOrNull),
     );
@@ -118,6 +119,25 @@ class TrackedShowListTile extends ConsumerWidget {
       showProgressProvider(show.showId).select((a) => a.valueOrNull),
     );
 
+    final isMarkingWatched = ref.watch(_markingWatchedProvider(show.showId));
+
+    /// Reset optimistic UI **only when new data arrives**
+    ref.listen<ShowProgress?>(
+      showProgressProvider(show.showId).select((a) => a.valueOrNull),
+      (prev, curr) {
+        if (prev != null &&
+            curr != null &&
+            curr.watchedCount != prev.watchedCount) {
+          ref.read(_markingWatchedProvider(show.showId).notifier).state = false;
+        }
+      },
+    );
+
+    /// Show full green optimistic card
+    if (isMarkingWatched) {
+      return _markedWatchedTile();
+    }
+
     return Dismissible(
       key: ValueKey('${show.showId}-${next?.season}-${next?.episode}'),
       direction:
@@ -125,6 +145,10 @@ class TrackedShowListTile extends ConsumerWidget {
       confirmDismiss: (_) async {
         if (next == null) return false;
 
+        /// 1️⃣ Immediate UI feedback
+        ref.read(_markingWatchedProvider(show.showId).notifier).state = true;
+
+        /// 2️⃣ Trigger update
         await _markNextEpisodeWatched(
           ref,
           show.showId,
@@ -132,12 +156,11 @@ class TrackedShowListTile extends ConsumerWidget {
           next.episode,
         );
 
-        return false; // keep tile
+        return false;
       },
       background: _swipeWatchedBackground(),
       child: _buildTileContent(
         context,
-        ref,
         watched,
         next,
         progress,
@@ -145,13 +168,12 @@ class TrackedShowListTile extends ConsumerWidget {
     );
   }
 
-  // ----------------------------
+  // ------------------------------------------------
   // Tile Content
-  // ----------------------------
+  // ------------------------------------------------
 
   Widget _buildTileContent(
     BuildContext context,
-    WidgetRef ref,
     List<TrackedEpisode>? watched,
     NextEpisode? next,
     ShowProgress? progress,
@@ -166,7 +188,6 @@ class TrackedShowListTile extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Poster
           GestureDetector(
             onTap: () => _navigateToShowDetail(context),
             child: ClipRRect(
@@ -182,10 +203,7 @@ class TrackedShowListTile extends ConsumerWidget {
               ),
             ),
           ),
-
           const SizedBox(width: 12),
-
-          // Content
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,7 +214,7 @@ class TrackedShowListTile extends ConsumerWidget {
                 const SizedBox(height: 10),
                 _progressBar(progress, next),
                 const SizedBox(height: 10),
-                _nextAction(context, ref, next),
+                _nextAction(context, next),
               ],
             ),
           ),
@@ -205,9 +223,9 @@ class TrackedShowListTile extends ConsumerWidget {
     );
   }
 
-  // ----------------------------
-  // Sub-widgets
-  // ----------------------------
+  // ------------------------------------------------
+  // Sub widgets
+  // ------------------------------------------------
 
   Widget _title(BuildContext context) {
     return GestureDetector(
@@ -241,10 +259,8 @@ class TrackedShowListTile extends ConsumerWidget {
     );
   }
 
-  Widget _progressBar(ShowProgress? progress, dynamic next) {
-    if (progress == null) {
-      return const SizedBox(height: 6);
-    }
+  Widget _progressBar(ShowProgress? progress, NextEpisode? next) {
+    if (progress == null) return const SizedBox(height: 6);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,19 +297,12 @@ class TrackedShowListTile extends ConsumerWidget {
     );
   }
 
-  Widget _nextAction(
-    BuildContext context,
-    WidgetRef ref,
-    NextEpisode? next,
-  ) {
-    if (next == null) {
-      return _completedBadge();
-    }
+  Widget _nextAction(BuildContext context, NextEpisode? next) {
+    if (next == null) return _completedBadge();
 
     return InkWell(
       onTap: () => _showNextEpisodeSheet(
         context,
-        ref,
         show.showId,
         next.season,
         next.episode,
@@ -312,6 +321,42 @@ class TrackedShowListTile extends ConsumerWidget {
             fontSize: 13,
           ),
         ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------
+  // UI helpers
+  // ------------------------------------------------
+
+  Widget _markedWatchedTile() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.green,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Stack(
+        alignment: Alignment.center,
+        children: [
+          // Invisible layout replica (keeps exact size)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(width: 90, height: 135),
+              SizedBox(width: 12),
+              Expanded(child: SizedBox()),
+            ],
+          ),
+
+          // Perfectly centered tick
+          Icon(
+            Icons.check_rounded,
+            color: Colors.white,
+            size: 52,
+          ),
+        ],
       ),
     );
   }
@@ -354,19 +399,10 @@ class TrackedShowListTile extends ConsumerWidget {
           ],
         ),
       ),
-      child: const Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.check_circle, color: Colors.green, size: 32),
-          SizedBox(height: 4),
-          Text(
-            'Watched',
-            style: TextStyle(
-              color: Colors.green,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+      child: const Icon(
+        Icons.check_circle,
+        color: Colors.green,
+        size: 32,
       ),
     );
   }
