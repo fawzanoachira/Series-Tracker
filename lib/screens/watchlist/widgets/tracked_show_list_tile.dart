@@ -337,6 +337,7 @@ class TrackedShowListTile extends ConsumerWidget {
   Widget _markedWatchedTile() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      height: 151,
       decoration: BoxDecoration(
         color: Colors.green,
         borderRadius: BorderRadius.circular(8),
