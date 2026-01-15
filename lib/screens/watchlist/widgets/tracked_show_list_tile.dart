@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:series_tracker/api/tracker.dart' as tracker;
+import 'package:series_tracker/models/tracking/tracked_episode.dart';
 import 'package:series_tracker/models/tracking/tracked_show.dart';
 import 'package:series_tracker/models/tvmaze/image_tvmaze.dart';
 import 'package:series_tracker/models/tvmaze/show.dart';
@@ -19,51 +20,9 @@ class TrackedShowListTile extends ConsumerWidget {
     required this.show,
   });
 
-  Future<void> _showNextEpisodeSheet(
-    BuildContext context,
-    WidgetRef ref,
-    int showId,
-    int season,
-    int episode,
-  ) async {
-    try {
-      // Fetch show images for blur fallback
-      final showImages = await tracker.fetchShowImages(showId);
-
-      // Fetch all seasons to find the right one
-      final seasons = await tracker.getSeasons(showId);
-      final targetSeason = seasons.firstWhere(
-        (s) => s.number == season,
-        orElse: () => seasons.first,
-      );
-
-      // Fetch episodes for that season
-      final episodes = await tracker.getEpisodes(targetSeason.id!);
-
-      // Find the target episode index
-      final episodeIndex = episodes.indexWhere(
-        (e) => e.number == episode,
-      );
-
-      if (episodeIndex == -1) return;
-
-      // Show the episode carousel sheet with all season episodes
-      if (context.mounted) {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          builder: (_) => EpisodeCarouselSheet(
-            showId: showId,
-            episodes: episodes, // All episodes in the season
-            initialIndex: episodeIndex, // Start at the next episode
-            showImages: showImages,
-          ),
-        );
-      }
-    } catch (e) {
-      // Handle error silently or show snackbar
-    }
-  }
+  // ----------------------------
+  // Navigation
+  // ----------------------------
 
   void _navigateToShowDetail(BuildContext context) {
     final showModel = Show(
@@ -82,117 +41,120 @@ class TrackedShowListTile extends ConsumerWidget {
     );
   }
 
+  // ----------------------------
+  // Episode Sheet
+  // ----------------------------
+
+  Future<void> _showNextEpisodeSheet(
+    BuildContext context,
+    WidgetRef ref,
+    int showId,
+    int season,
+    int episode,
+  ) async {
+    try {
+      final showImages = await tracker.fetchShowImages(showId);
+      final seasons = await tracker.getSeasons(showId);
+
+      final targetSeason = seasons.firstWhere(
+        (s) => s.number == season,
+        orElse: () => seasons.first,
+      );
+
+      final episodes = await tracker.getEpisodes(targetSeason.id!);
+      final episodeIndex = episodes.indexWhere((e) => e.number == episode);
+
+      if (episodeIndex == -1 || !context.mounted) return;
+
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => EpisodeCarouselSheet(
+          showId: showId,
+          episodes: episodes,
+          initialIndex: episodeIndex,
+          showImages: showImages,
+        ),
+      );
+    } catch (_) {
+      // Silent fail
+    }
+  }
+
+  // ----------------------------
+  // Mark watched
+  // ----------------------------
+
   Future<void> _markNextEpisodeWatched(
     WidgetRef ref,
     int showId,
     int season,
     int episode,
   ) async {
-    final actions = ref.read(trackingActionsProvider.notifier);
-    await actions.markEpisodeWatched(
-      showId: showId,
-      season: season,
-      episode: episode,
-    );
+    await ref.read(trackingActionsProvider.notifier).markEpisodeWatched(
+          showId: showId,
+          season: season,
+          episode: episode,
+        );
   }
+
+  // ----------------------------
+  // Build
+  // ----------------------------
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final watchedAsync = ref.watch(episodeProgressProvider(show.showId));
-    final nextAsync = ref.watch(nextEpisodeProvider(show.showId));
-    final progressAsync = ref.watch(showProgressProvider(show.showId));
+    // ✅ Optional UX improvement:
+    // Only rebuild when actual value changes (not loading/error)
+    final watched = ref.watch(
+      episodeProgressProvider(show.showId).select((a) => a.valueOrNull),
+    );
 
-    return nextAsync.maybeWhen(
-      data: (next) {
-        // Only make dismissible if there's a next episode
-        if (next == null) {
-          return _buildTileContent(
-            context,
-            ref,
-            watchedAsync,
-            nextAsync,
-            progressAsync,
-          );
-        }
+    final next = ref.watch(
+      nextEpisodeProvider(show.showId).select((a) => a.valueOrNull),
+    );
 
-        return Dismissible(
-          key: Key('${show.showId}-${next.season}-${next.episode}'),
-          direction: DismissDirection.endToStart,
-          confirmDismiss: (direction) async {
-            // Mark as watched
-            await _markNextEpisodeWatched(
-              ref,
-              show.showId,
-              next.season,
-              next.episode,
-            );
+    final progress = ref.watch(
+      showProgressProvider(show.showId).select((a) => a.valueOrNull),
+    );
 
-            // Don't actually dismiss the tile
-            return false;
-          },
-          background: Container(
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.transparent,
-                  Colors.green.withValues(alpha: 0.3),
-                  Colors.green.withValues(alpha: 0.6),
-                ],
-              ),
-            ),
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.green,
-                  size: 32,
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Watched',
-                  style: TextStyle(
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          child: _buildTileContent(
-            context,
-            ref,
-            watchedAsync,
-            nextAsync,
-            progressAsync,
-          ),
+    return Dismissible(
+      key: ValueKey('${show.showId}-${next?.season}-${next?.episode}'),
+      direction:
+          next != null ? DismissDirection.endToStart : DismissDirection.none,
+      confirmDismiss: (_) async {
+        if (next == null) return false;
+
+        await _markNextEpisodeWatched(
+          ref,
+          show.showId,
+          next.season,
+          next.episode,
         );
+
+        return false; // keep tile
       },
-      orElse: () => _buildTileContent(
+      background: _swipeWatchedBackground(),
+      child: _buildTileContent(
         context,
         ref,
-        watchedAsync,
-        nextAsync,
-        progressAsync,
-      ),
-      error: (_, __) => _buildTileContent(
-        context,
-        ref,
-        watchedAsync,
-        nextAsync,
-        progressAsync,
+        watched,
+        next,
+        progress,
       ),
     );
   }
+
+  // ----------------------------
+  // Tile Content
+  // ----------------------------
 
   Widget _buildTileContent(
     BuildContext context,
     WidgetRef ref,
-    AsyncValue watchedAsync,
-    AsyncValue nextAsync,
-    AsyncValue progressAsync,
+    List<TrackedEpisode>? watched,
+    NextEpisode? next,
+    ShowProgress? progress,
   ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -204,7 +166,7 @@ class TrackedShowListTile extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Smaller Poster - tappable to navigate
+          // Poster
           GestureDetector(
             onTap: () => _navigateToShowDetail(context),
             child: ClipRRect(
@@ -223,188 +185,185 @@ class TrackedShowListTile extends ConsumerWidget {
 
           const SizedBox(width: 12),
 
-          // Content on the right
+          // Content
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Show Title - tappable to navigate
-                GestureDetector(
-                  onTap: () => _navigateToShowDetail(context),
-                  child: Text(
-                    show.name,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-
+                _title(context),
                 const SizedBox(height: 6),
-
-                // Last watched episode info
-                watchedAsync.maybeWhen(
-                  data: (watchedEpisodes) {
-                    if (watchedEpisodes.isEmpty) {
-                      return const Text(
-                        'Not started yet',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white60,
-                        ),
-                      );
-                    }
-
-                    final lastWatched = watchedEpisodes.last;
-                    return Text(
-                      'S${lastWatched.season.toString().padLeft(2, '0')}'
-                      'E${lastWatched.episode.toString().padLeft(2, '0')}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.white60,
-                      ),
-                    );
-                  },
-                  orElse: () => const SizedBox.shrink(),
-                  error: (_, __) => const SizedBox.shrink(),
-                ),
-
+                _lastWatched(watched),
                 const SizedBox(height: 10),
-
-                // Progress bar
-                progressAsync.maybeWhen(
-                  data: (progress) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: SizedBox(
-                            height: 6,
-                            child: LinearProgressIndicator(
-                              value: progress.percentage,
-                              backgroundColor: Colors.grey[800],
-                              valueColor: const AlwaysStoppedAnimation<Color>(
-                                Color(0xFF8B5CF6), // Purple color
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${progress.watchedCount}/${progress.totalCount}',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Colors.white54,
-                              ),
-                            ),
-                            nextAsync.maybeWhen(
-                              data: (next) {
-                                if (next == null) {
-                                  return const SizedBox.shrink();
-                                }
-                                final remaining =
-                                    progress.totalCount - progress.watchedCount;
-                                return Text(
-                                  '$remaining left',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.white54,
-                                  ),
-                                );
-                              },
-                              orElse: () => const SizedBox.shrink(),
-                              error: (_, __) => const SizedBox.shrink(),
-                            ),
-                          ],
-                        ),
-                      ],
-                    );
-                  },
-                  orElse: () => const SizedBox(height: 6),
-                  error: (_, __) => const SizedBox.shrink(),
-                ),
-
+                _progressBar(progress, next),
                 const SizedBox(height: 10),
-
-                // View Next Button
-                nextAsync.maybeWhen(
-                  data: (next) {
-                    if (next == null) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              color: Colors.green,
-                              size: 16,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Completed',
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return InkWell(
-                      onTap: () => _showNextEpisodeSheet(
-                        context,
-                        ref,
-                        show.showId,
-                        next.season,
-                        next.episode,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[850],
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'View Next',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                  orElse: () => const SizedBox.shrink(),
-                  error: (_, __) => const SizedBox.shrink(),
-                ),
+                _nextAction(context, ref, next),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ----------------------------
+  // Sub-widgets
+  // ----------------------------
+
+  Widget _title(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _navigateToShowDetail(context),
+      child: Text(
+        show.name,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget _lastWatched(List<TrackedEpisode>? watched) {
+    if (watched == null || watched.isEmpty) {
+      return const Text(
+        'Not started yet',
+        style: TextStyle(fontSize: 13, color: Colors.white60),
+      );
+    }
+
+    final last = watched.last;
+    return Text(
+      'S${last.season.toString().padLeft(2, '0')}'
+      'E${last.episode.toString().padLeft(2, '0')}',
+      style: const TextStyle(fontSize: 13, color: Colors.white60),
+    );
+  }
+
+  Widget _progressBar(ShowProgress? progress, dynamic next) {
+    if (progress == null) {
+      return const SizedBox(height: 6);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: SizedBox(
+            height: 6,
+            child: LinearProgressIndicator(
+              value: progress.percentage,
+              backgroundColor: Colors.grey[800],
+              valueColor: const AlwaysStoppedAnimation(
+                Color(0xFF8B5CF6),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${progress.watchedCount}/${progress.totalCount}',
+              style: const TextStyle(fontSize: 11, color: Colors.white54),
+            ),
+            if (next != null)
+              Text(
+                '${progress.totalCount - progress.watchedCount} left',
+                style: const TextStyle(fontSize: 11, color: Colors.white54),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _nextAction(
+    BuildContext context,
+    WidgetRef ref,
+    NextEpisode? next,
+  ) {
+    if (next == null) {
+      return _completedBadge();
+    }
+
+    return InkWell(
+      onTap: () => _showNextEpisodeSheet(
+        context,
+        ref,
+        show.showId,
+        next.season,
+        next.episode,
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey[850],
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: const Text(
+          'View Next',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _completedBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.green.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle, color: Colors.green, size: 16),
+          SizedBox(width: 4),
+          Text(
+            'Completed',
+            style: TextStyle(
+              color: Colors.green,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _swipeWatchedBackground() {
+    return Container(
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.only(right: 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.transparent,
+            Colors.green.withValues(alpha: 0.3),
+            Colors.green.withValues(alpha: 0.6),
+          ],
+        ),
+      ),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.check_circle, color: Colors.green, size: 32),
+          SizedBox(height: 4),
+          Text(
+            'Watched',
+            style: TextStyle(
+              color: Colors.green,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
