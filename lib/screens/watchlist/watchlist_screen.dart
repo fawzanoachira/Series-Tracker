@@ -43,15 +43,38 @@ class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (shows) {
-          if (shows.isEmpty) {
-            return const Center(
-              child: Text('No shows tracked yet'),
+          // Filter to only show "watching" status
+          final watchingShows = shows
+              .where((show) => show.status == TrackedShowStatus.watching)
+              .toList();
+
+          if (watchingShows.isEmpty) {
+            return RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(trackedShowsProvider);
+                await ref.read(trackedShowsProvider.future);
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height - 200,
+                  child: const Center(
+                    child: Text('No shows in watchlist'),
+                  ),
+                ),
+              ),
             );
           }
 
-          return _view == WatchlistView.grid
-              ? _WatchlistGrid(shows: shows)
-              : _WatchlistList(shows: shows);
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(trackedShowsProvider);
+              await ref.read(trackedShowsProvider.future);
+            },
+            child: _view == WatchlistView.grid
+                ? _WatchlistGrid(shows: watchingShows)
+                : _WatchlistList(shows: watchingShows),
+          );
         },
       ),
     );

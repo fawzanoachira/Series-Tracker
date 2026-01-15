@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:series_tracker/models/tracking/tracked_show.dart';
 import 'package:series_tracker/models/tvmaze/image_tvmaze.dart';
 import 'package:series_tracker/models/tvmaze/show.dart';
-import 'package:series_tracker/providers/episode_progress_provider.dart';
 import 'package:series_tracker/providers/next_episode_provider.dart';
+import 'package:series_tracker/providers/show_progress_provider.dart';
 import 'package:series_tracker/screens/show_detail_screen/show_detail_screen.dart';
 
 class TrackedShowGridTile extends ConsumerWidget {
@@ -14,7 +14,7 @@ class TrackedShowGridTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final progressAsync = ref.watch(episodeProgressProvider(show.showId));
+    final progressAsync = ref.watch(showProgressProvider(show.showId));
     final nextAsync = ref.watch(nextEpisodeProvider(show.showId));
 
     return InkWell(
@@ -27,7 +27,7 @@ class TrackedShowGridTile extends ConsumerWidget {
           image: show.posterUrl != null
               ? ImageTvmaze(medium: show.posterUrl!)
               : null,
-          summary: '', // optional: you can fetch real summary later
+          summary: '',
         );
 
         Navigator.push(
@@ -69,22 +69,34 @@ class TrackedShowGridTile extends ConsumerWidget {
 
           const SizedBox(height: 4),
 
-          // Progress
+          // Progress count
           progressAsync.when(
-            data: (episodes) {
-              return LinearProgressIndicator(
-                value: episodes.isEmpty ? 0 : null,
-                minHeight: 4,
+            data: (progress) {
+              return Text(
+                '${progress.watchedCount}/${progress.totalCount} watched',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Colors.grey[600],
+                    ),
               );
             },
-            loading: () => const SizedBox(height: 4),
-            error: (_, __) => const SizedBox(height: 4),
+            loading: () => const SizedBox(height: 16),
+            error: (_, __) => const SizedBox(height: 16),
           ),
+
+          const SizedBox(height: 2),
 
           // Up next
           nextAsync.when(
             data: (next) {
-              if (next == null) return const SizedBox.shrink();
+              if (next == null) {
+                return Text(
+                  'All caught up! 🎉',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Colors.green,
+                        fontWeight: FontWeight.w500,
+                      ),
+                );
+              }
               return Text(
                 'Up next: S${next.season}E${next.episode}',
                 style: Theme.of(context).textTheme.labelSmall,

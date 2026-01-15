@@ -29,6 +29,34 @@ class EpisodeDao {
     );
   }
 
+  /// Batch insert multiple episodes at once - MUCH faster for bulk operations
+  Future<void> markMultipleWatched({
+    required int showId,
+    required List<({int season, int episode})> episodes,
+  }) async {
+    final db = await _database.database;
+    final batch = db.batch();
+    final now = DateTime.now();
+
+    for (final ep in episodes) {
+      final tracked = TrackedEpisode(
+        showId: showId,
+        season: ep.season,
+        episode: ep.episode,
+        watched: true,
+        watchedAt: now,
+      );
+
+      batch.insert(
+        'tracked_episodes',
+        tracked.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+
+    await batch.commit(noResult: true);
+  }
+
   Future<void> markUnwatched({
     required int showId,
     required int season,
@@ -41,6 +69,25 @@ class EpisodeDao {
       where: 'show_id = ? AND season = ? AND episode = ?',
       whereArgs: [showId, season, episode],
     );
+  }
+
+  /// Batch delete multiple episodes at once - MUCH faster for bulk operations
+  Future<void> markMultipleUnwatched({
+    required int showId,
+    required List<({int season, int episode})> episodes,
+  }) async {
+    final db = await _database.database;
+    final batch = db.batch();
+
+    for (final ep in episodes) {
+      batch.delete(
+        'tracked_episodes',
+        where: 'show_id = ? AND season = ? AND episode = ?',
+        whereArgs: [showId, ep.season, ep.episode],
+      );
+    }
+
+    await batch.commit(noResult: true);
   }
 
   Future<List<TrackedEpisode>> getEpisodesForShow(int showId) async {

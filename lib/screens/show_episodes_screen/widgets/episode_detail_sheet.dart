@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:series_tracker/models/tvmaze/episode.dart';
 import 'package:series_tracker/models/tvmaze/show_image.dart';
 import 'package:series_tracker/navigation/fade_scale_route.dart';
@@ -8,46 +10,85 @@ import 'package:series_tracker/screens/show_episodes_screen/widgets/episode_imag
 import 'package:series_tracker/utils/image_preoloader.dart';
 import 'package:series_tracker/widgets/cached_image.dart';
 
-class EpisodeDetailSheet extends StatefulWidget {
+import 'package:series_tracker/providers/is_episode_watched_provider.dart';
+import 'package:series_tracker/providers/tracking_actions_provider.dart';
+
+class EpisodeDetailSheet extends ConsumerStatefulWidget {
+  final int showId;
   final Episode episode;
   final List<ShowImage>? showImages;
 
   const EpisodeDetailSheet({
     super.key,
+    required this.showId,
     required this.episode,
     this.showImages,
   });
 
   @override
-  State<EpisodeDetailSheet> createState() => _EpisodeDetailSheetState();
+  ConsumerState<EpisodeDetailSheet> createState() => _EpisodeDetailSheetState();
 }
 
-class _EpisodeDetailSheetState extends State<EpisodeDetailSheet> {
+class _EpisodeDetailSheetState extends ConsumerState<EpisodeDetailSheet> {
   bool _expanded = false;
-  static const double _dotsHeight = 38;
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+    final isWatched = ref.watch(
+      isEpisodeWatchedProvider((
+        showId: widget.showId,
+        season: widget.episode.season!,
+        episode: widget.episode.number!,
+      )),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _dragHandle(),
+          const SizedBox(height: 12),
+          _imageSection(context),
+          const SizedBox(height: 12),
+          _title(context),
+          const SizedBox(height: 4),
+          _meta(context),
+          const SizedBox(height: 12),
+          _watchAction(isWatched),
+          const SizedBox(height: 12),
+          _summary(context),
+          const SizedBox(height: 16),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _dragHandle(),
-            const SizedBox(height: 12),
-            _imageSection(context),
-            const SizedBox(height: 12),
-            _title(context),
-            const SizedBox(height: 4),
-            _meta(context),
-            const SizedBox(height: 12),
-            _summary(context),
-          ],
-        ),
+    );
+  }
+
+  Widget _watchAction(bool isWatched) {
+    return FilledButton.icon(
+      icon: Icon(
+        isWatched ? Icons.check_circle : Icons.circle_outlined,
       ),
+      label: Text(
+        isWatched ? 'Marked as watched' : 'Mark as watched',
+      ),
+      onPressed: () {
+        final actions = ref.read(trackingActionsProvider.notifier);
+
+        if (isWatched) {
+          actions.markEpisodeUnwatched(
+            showId: widget.showId,
+            season: widget.episode.season!,
+            episode: widget.episode.number!,
+          );
+        } else {
+          actions.markEpisodeWatched(
+            showId: widget.showId,
+            season: widget.episode.season!,
+            episode: widget.episode.number!,
+          );
+        }
+      },
     );
   }
 
@@ -109,9 +150,11 @@ class _EpisodeDetailSheetState extends State<EpisodeDetailSheet> {
             ),
             Positioned.fill(
               child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                  child: Container(
-                      color: Colors.black.withValues(alpha: (0.35 * 255))))
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
+                  color: Colors.black.withValues(alpha: (0.35 * 255)),
+                ),
+              ),
             ),
           ],
         ),
@@ -131,7 +174,9 @@ class _EpisodeDetailSheetState extends State<EpisodeDetailSheet> {
 
   Widget _meta(BuildContext context) {
     return Text(
-      'Season ${widget.episode.season} · Episode ${widget.episode.number} · ${widget.episode.runtime ?? '-'} min',
+      'Season ${widget.episode.season} · '
+      'Episode ${widget.episode.number} · '
+      '${widget.episode.runtime ?? '-'} min',
       style: Theme.of(context).textTheme.bodySmall,
     );
   }
@@ -143,60 +188,30 @@ class _EpisodeDetailSheetState extends State<EpisodeDetailSheet> {
     final text = raw.replaceAll(RegExp(r'<[^>]*>'), '');
     final bool showToggle = text.length > 140;
 
-    String displayText;
-    if (_expanded || !showToggle) {
-      displayText = text;
-    } else {
-      displayText = text.substring(0, 140);
-    }
+    final displayText =
+        _expanded || !showToggle ? text : text.substring(0, 140);
 
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: _dotsHeight),
-        child: SingleChildScrollView(
-          physics: _expanded
-              ? const BouncingScrollPhysics()
-              : const NeverScrollableScrollPhysics(),
-          child: Text.rich(
-            TextSpan(
-              text: displayText,
-              style: Theme.of(context).textTheme.bodyMedium,
-              children: showToggle && !_expanded
-                  ? [
-                      TextSpan(
-                        text: '... read more',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            setState(() {
-                              _expanded = true;
-                            });
-                          },
-                      ),
-                    ]
-                  : _expanded && showToggle
-                      ? [
-                          TextSpan(
-                            text: ' show less',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                setState(() {
-                                  _expanded = false;
-                                });
-                              },
-                          )
-                        ]
-                      : [],
-            ),
-          ),
-        ),
+    return Text.rich(
+      TextSpan(
+        text: displayText,
+        style: Theme.of(context).textTheme.bodyMedium,
+        children: showToggle
+            ? [
+                TextSpan(
+                  text: _expanded ? ' show less' : '... read more',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      setState(() {
+                        _expanded = !_expanded;
+                      });
+                    },
+                ),
+              ]
+            : [],
       ),
     );
   }
