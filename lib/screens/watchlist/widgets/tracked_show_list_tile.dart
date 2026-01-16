@@ -143,11 +143,13 @@ class TrackedShowListTile extends ConsumerWidget {
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (_) => EpisodeCarouselSheet(
-          showId: showId,
-          episodes: airedEpisodes,
-          initialIndex: initialIndex,
-          showImages: showImages,
+        builder: (_) => SafeArea(
+          child: EpisodeCarouselSheet(
+            showId: showId,
+            episodes: airedEpisodes,
+            initialIndex: initialIndex,
+            showImages: showImages,
+          ),
         ),
       );
     } catch (_) {

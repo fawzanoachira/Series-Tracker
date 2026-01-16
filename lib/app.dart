@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
             color: appBarColor,
           )),
       debugShowCheckedModeBanner: false,
-      home: const RootScreen(),
+      home: const SafeArea(top: false, child: RootScreen()),
     );
   }
 }

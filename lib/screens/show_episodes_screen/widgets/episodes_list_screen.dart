@@ -95,15 +95,15 @@ class _EpisodeListTileState extends ConsumerState<_EpisodeListTile> {
     return ListTile(
       onTap: () {
         showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => EpisodeCarouselSheet(
-            showId: widget.showId,
-            episodes: widget.episodes,
-            initialIndex: widget.index,
-          ),
-        );
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => SafeArea(
+                    child: EpisodeCarouselSheet(
+                  showId: widget.showId,
+                  episodes: widget.episodes,
+                  initialIndex: widget.index,
+                )));
       },
       title: Text(widget.episode.name ?? 'Episode ${widget.episode.number}'),
       subtitle: Text(
