@@ -41,32 +41,26 @@ class _HomeAppBarState extends State<HomeAppBar> {
               },
             )
           : null,
-      title: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        transitionBuilder: (Widget child, Animation<double> animation) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        child: _isSearching
-            ? TextField(
-                key: const ValueKey('search_field'),
-                controller: widget.searchController,
-                autofocus: true,
-                onSubmitted: (_) => widget.onSearch(),
-                decoration: const InputDecoration(
-                  hintText: "Search shows...",
-                  border: InputBorder.none,
-                ),
-              )
-            : Text(
-                "Lahv",
-                key: const ValueKey('title'),
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  // You can customize further: color, etc.
-                ),
+      title: _isSearching
+          ? TextField(
+              key: const ValueKey('search_field'),
+              controller: widget.searchController,
+              autofocus: true,
+              onSubmitted: (_) => widget.onSearch(),
+              decoration: const InputDecoration(
+                hintText: "Search shows...",
+                border: InputBorder.none,
               ),
-      ),
+            )
+          : Text(
+              "Lahv",
+              key: const ValueKey('title'),
+              style: GoogleFonts.poppins(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                // You can customize further: color, etc.
+              ),
+            ),
       actions: [
         IconButton(
           onPressed: () {
