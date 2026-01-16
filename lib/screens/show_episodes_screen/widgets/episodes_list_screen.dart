@@ -5,6 +5,7 @@ import 'package:series_tracker/models/tvmaze/episode.dart';
 import 'package:series_tracker/models/tvmaze/season.dart';
 import 'package:series_tracker/providers/is_episode_watched_provider.dart';
 import 'package:series_tracker/providers/tracking_actions_provider.dart';
+import 'package:series_tracker/providers/has_episode_aired_provider.dart';
 import 'package:series_tracker/screens/show_episodes_screen/widgets/episode_carousel_sheet.dart';
 
 // Provider for fetching episodes (cached per season)
@@ -83,9 +84,13 @@ class _EpisodeListTileState extends ConsumerState<_EpisodeListTile> {
       episode: widget.episode.number ?? 0,
     );
     final actualWatched = ref.watch(isEpisodeWatchedProvider(episodeKey));
+    final hasAired = ref.watch(hasEpisodeAiredProvider(widget.episode));
 
     // Use optimistic state if available, otherwise use actual state
     final isWatched = _optimisticWatched ?? actualWatched;
+
+    // Can always unwatch, but can only watch if aired
+    final canInteract = isWatched || hasAired;
 
     return ListTile(
       onTap: () {
@@ -101,55 +106,71 @@ class _EpisodeListTileState extends ConsumerState<_EpisodeListTile> {
         );
       },
       title: Text(widget.episode.name ?? 'Episode ${widget.episode.number}'),
-      subtitle: Text(widget.episode.airdate ?? ''),
+      subtitle: Text(
+        widget.episode.airdate != null
+            ? hasAired
+                ? widget.episode.airdate!
+                : '${widget.episode.airdate!} (Not aired)'
+            : 'Unknown air date',
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       trailing: IconButton(
         icon: Icon(
-          isWatched ? Icons.check_circle : Icons.add_circle_outline,
-          color: isWatched ? Colors.green : Colors.grey,
+          isWatched
+              ? Icons.check_circle
+              : hasAired
+                  ? Icons.add_circle_outline
+                  : Icons.schedule,
+          color: isWatched
+              ? Colors.green
+              : hasAired
+                  ? Colors.grey
+                  : Colors.orange.shade300,
         ),
-        onPressed: () async {
-          // Optimistically update UI immediately
-          setState(() {
-            _optimisticWatched = !isWatched;
-          });
+        onPressed: canInteract
+            ? () async {
+                // Optimistically update UI immediately
+                setState(() {
+                  _optimisticWatched = !isWatched;
+                });
 
-          final actions = ref.read(trackingActionsProvider.notifier);
-          final messenger = ScaffoldMessenger.of(context);
+                final actions = ref.read(trackingActionsProvider.notifier);
+                final messenger = ScaffoldMessenger.of(context);
 
-          try {
-            if (isWatched) {
-              await actions.markEpisodeUnwatched(
-                showId: widget.showId,
-                season: widget.episode.season ?? 0,
-                episode: widget.episode.number ?? 0,
-              );
-            } else {
-              await actions.markEpisodeWatched(
-                showId: widget.showId,
-                season: widget.episode.season ?? 0,
-                episode: widget.episode.number ?? 0,
-              );
-            }
+                try {
+                  if (isWatched) {
+                    await actions.markEpisodeUnwatched(
+                      showId: widget.showId,
+                      season: widget.episode.season ?? 0,
+                      episode: widget.episode.number ?? 0,
+                    );
+                  } else {
+                    await actions.markEpisodeWatched(
+                      showId: widget.showId,
+                      season: widget.episode.season ?? 0,
+                      episode: widget.episode.number ?? 0,
+                    );
+                  }
 
-            // Clear optimistic state once actual state is updated
-            if (mounted) {
-              setState(() {
-                _optimisticWatched = null;
-              });
-            }
-          } catch (e) {
-            // Revert optimistic update on error
-            if (mounted) {
-              setState(() {
-                _optimisticWatched = null;
-              });
-              messenger.showSnackBar(
-                SnackBar(content: Text('Failed to update: $e')),
-              );
-            }
-          }
-        },
+                  // Clear optimistic state once actual state is updated
+                  if (mounted) {
+                    setState(() {
+                      _optimisticWatched = null;
+                    });
+                  }
+                } catch (e) {
+                  // Revert optimistic update on error
+                  if (mounted) {
+                    setState(() {
+                      _optimisticWatched = null;
+                    });
+                    messenger.showSnackBar(
+                      SnackBar(content: Text('Failed to update: $e')),
+                    );
+                  }
+                }
+              }
+            : null,
       ),
     );
   }

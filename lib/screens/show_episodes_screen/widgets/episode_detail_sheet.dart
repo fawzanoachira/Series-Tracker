@@ -12,6 +12,7 @@ import 'package:series_tracker/widgets/cached_image.dart';
 
 import 'package:series_tracker/providers/is_episode_watched_provider.dart';
 import 'package:series_tracker/providers/tracking_actions_provider.dart';
+import 'package:series_tracker/providers/has_episode_aired_provider.dart';
 
 class EpisodeDetailSheet extends ConsumerStatefulWidget {
   final int showId;
@@ -42,6 +43,8 @@ class _EpisodeDetailSheetState extends ConsumerState<EpisodeDetailSheet> {
       )),
     );
 
+    final hasAired = ref.watch(hasEpisodeAiredProvider(widget.episode));
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -55,7 +58,7 @@ class _EpisodeDetailSheetState extends ConsumerState<EpisodeDetailSheet> {
           const SizedBox(height: 4),
           _meta(context),
           const SizedBox(height: 12),
-          _watchAction(isWatched),
+          _watchAction(isWatched, hasAired),
           const SizedBox(height: 12),
           _summary(context),
           const SizedBox(height: 16),
@@ -64,31 +67,40 @@ class _EpisodeDetailSheetState extends ConsumerState<EpisodeDetailSheet> {
     );
   }
 
-  Widget _watchAction(bool isWatched) {
+  Widget _watchAction(bool isWatched, bool hasAired) {
+    // Can always unwatch, but can only watch if aired
+    final canInteract = isWatched || hasAired;
+
     return FilledButton.icon(
       icon: Icon(
         isWatched ? Icons.check_circle : Icons.circle_outlined,
       ),
       label: Text(
-        isWatched ? 'Marked as watched' : 'Mark as watched',
+        isWatched
+            ? 'Marked as watched'
+            : hasAired
+                ? 'Mark as watched'
+                : 'Not aired yet',
       ),
-      onPressed: () {
-        final actions = ref.read(trackingActionsProvider.notifier);
+      onPressed: canInteract
+          ? () {
+              final actions = ref.read(trackingActionsProvider.notifier);
 
-        if (isWatched) {
-          actions.markEpisodeUnwatched(
-            showId: widget.showId,
-            season: widget.episode.season!,
-            episode: widget.episode.number!,
-          );
-        } else {
-          actions.markEpisodeWatched(
-            showId: widget.showId,
-            season: widget.episode.season!,
-            episode: widget.episode.number!,
-          );
-        }
-      },
+              if (isWatched) {
+                actions.markEpisodeUnwatched(
+                  showId: widget.showId,
+                  season: widget.episode.season!,
+                  episode: widget.episode.number!,
+                );
+              } else {
+                actions.markEpisodeWatched(
+                  showId: widget.showId,
+                  season: widget.episode.season!,
+                  episode: widget.episode.number!,
+                );
+              }
+            }
+          : null,
     );
   }
 
