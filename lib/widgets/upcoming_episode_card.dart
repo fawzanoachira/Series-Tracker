@@ -64,14 +64,52 @@ class UpcomingEpisodeCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Show Name
-                    Text(
-                      upcomingEpisode.showName,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    // Show Name with Season Badge if new season
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            upcomingEpisode.showName,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (upcomingEpisode.isNewSeason) ...[
+                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.amber,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star,
+                                  size: 10,
+                                  color: Colors.black,
+                                ),
+                                SizedBox(width: 2),
+                                Text(
+                                  'NEW',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 4),
 
@@ -139,7 +177,7 @@ class UpcomingEpisodeCard extends ConsumerWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: badgeColor,
         borderRadius: BorderRadius.circular(8),
@@ -153,7 +191,7 @@ class UpcomingEpisodeCard extends ConsumerWidget {
             upcomingEpisode.daysLeftText,
             style: TextStyle(
               color: textColor,
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
@@ -161,7 +199,7 @@ class UpcomingEpisodeCard extends ConsumerWidget {
 
           // Air time if available
           if (upcomingEpisode.airTime != null) ...[
-            const SizedBox(height: 2),
+            const SizedBox(height: 3),
             Text(
               upcomingEpisode.airTime!,
               style: TextStyle(
@@ -171,13 +209,14 @@ class UpcomingEpisodeCard extends ConsumerWidget {
             ),
           ],
 
-          // Exact date for episodes more than a week away
-          if (daysUntil > 7 && upcomingEpisode.airDate != null) ...[
+          // Exact date
+          if (upcomingEpisode.airDate != null) ...[
             const SizedBox(height: 2),
             Text(
-              '${upcomingEpisode.airDate!.month}/${upcomingEpisode.airDate!.day}',
+              '${upcomingEpisode.airDate!.month.toString().padLeft(2, '0')}/'
+              '${upcomingEpisode.airDate!.day.toString().padLeft(2, '0')}',
               style: TextStyle(
-                color: textColor.withValues(alpha: 0.7),
+                color: textColor.withValues(alpha: 0.75),
                 fontSize: 9,
               ),
             ),

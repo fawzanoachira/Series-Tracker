@@ -59,11 +59,15 @@ class UpcomingEpisode {
     if (days == 0) return 'Today';
     if (days == 1) return 'Tomorrow';
     if (days < 0) return 'Aired';
-    if (days <= 7) return 'in $days days';
-    if (days <= 14) return 'in ${(days / 7).round()} week${days > 10 ? 's' : ''}';
-    if (days <= 30) return 'in ${(days / 7).round()} weeks';
 
-    return formattedAirDate;
+    // Show exact day count for all future episodes
+    if (days == 2) return 'in 2 days';
+    return 'in $days days';
+  }
+
+  /// Check if this is the first episode of a new season
+  bool get isNewSeason {
+    return episode.number == 1;
   }
 
   String get formattedAirDate {
