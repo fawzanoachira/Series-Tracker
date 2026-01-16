@@ -2,13 +2,52 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:series_tracker/api/tracker.dart' as tracker;
 import 'package:series_tracker/models/tracking/upcoming_episode.dart';
 import 'package:series_tracker/models/tvmaze/episode.dart';
-import 'package:series_tracker/providers/core_providers.dart';
 import 'package:series_tracker/providers/tracked_shows_provider.dart';
 
 /// Cache for episodes by show ID to avoid repeated API calls
 final _episodesCache = <int, List<Episode>>{};
 
-/// Provider that fetches ONLY upcoming episodes (today + future)
+/// Helper to check if episode has aired (considers airtime if available)
+bool _hasEpisodeAired(String? airdate, [String? airtime]) {
+  if (airdate == null || airdate.isEmpty) {
+    return true; // No airdate = consider it aired (skip it)
+  }
+
+  try {
+    DateTime episodeDateTime;
+
+    if (airtime != null && airtime.isNotEmpty) {
+      // Combine airdate and airtime
+      final dateParts = airdate.split('-');
+      final timeParts = airtime.split(':');
+
+      if (dateParts.length != 3 || timeParts.isEmpty) {
+        return true; // Invalid format = skip it
+      }
+
+      episodeDateTime = DateTime(
+        int.parse(dateParts[0]),
+        int.parse(dateParts[1]),
+        int.parse(dateParts[2]),
+        int.parse(timeParts[0]),
+        timeParts.length > 1 ? int.parse(timeParts[1]) : 0,
+      );
+    } else {
+      // Only airdate available, set to end of day
+      episodeDateTime =
+          DateTime.parse(airdate).add(const Duration(hours: 23, minutes: 59));
+    }
+
+    final now = DateTime.now();
+    return episodeDateTime.isBefore(now);
+  } catch (e) {
+    return true; // Parsing error = skip it
+  }
+}
+
+/// Provider that fetches upcoming episodes (unaired episodes only)
+/// This shows the NEXT UNAIRED episode for each tracked show,
+/// completely independent of watch status
 final upcomingEpisodesProvider =
     FutureProvider<List<UpcomingEpisode>>((ref) async {
   final trackedShowsAsync = ref.watch(trackedShowsProvider);
@@ -17,22 +56,12 @@ final upcomingEpisodesProvider =
     data: (trackedShows) async {
       if (trackedShows.isEmpty) return [];
 
-      final repo = ref.read(trackingRepositoryProvider);
       final List<UpcomingEpisode> upcomingEpisodes = [];
-      final now = DateTime.now();
 
       // Process shows in parallel for faster loading
       await Future.wait(
         trackedShows.map((trackedShow) async {
           try {
-            // Get watched episodes for this show
-            final watchedEpisodes =
-                await repo.getEpisodesForShow(trackedShow.showId);
-
-            // Create set of watched episodes for quick lookup
-            final watchedSet =
-                watchedEpisodes.map((e) => '${e.season}-${e.episode}').toSet();
-
             // Check cache first
             List<Episode> allEpisodes;
             if (_episodesCache.containsKey(trackedShow.showId)) {
@@ -55,7 +84,7 @@ final upcomingEpisodesProvider =
 
             if (allEpisodes.isEmpty) return;
 
-            // Sort episodes
+            // Sort episodes by season and number
             allEpisodes.sort((a, b) {
               final aSeason = a.season ?? 0;
               final bSeason = b.season ?? 0;
@@ -63,43 +92,43 @@ final upcomingEpisodesProvider =
               return (a.number ?? 0).compareTo(b.number ?? 0);
             });
 
-            // Find next unwatched episode
-            Episode? nextEpisode;
-            for (final episode in allEpisodes) {
-              final key = '${episode.season ?? 0}-${episode.number ?? 0}';
-              if (!watchedSet.contains(key)) {
-                nextEpisode = episode;
-                break;
+            // Filter to ONLY unaired episodes
+            // This completely ignores watch status
+            final unairedEpisodes = allEpisodes.where((episode) {
+              // Only include episodes that have NOT aired yet
+              return !_hasEpisodeAired(episode.airdate, episode.airtime);
+            }).toList();
+
+            // If no unaired episodes, skip this show
+            if (unairedEpisodes.isEmpty) return;
+
+            // Get the FIRST unaired episode (the next one to air)
+            final nextUnairedEpisode = unairedEpisodes.first;
+
+            // Parse the air date
+            DateTime? airDate;
+            if (nextUnairedEpisode.airdate != null) {
+              try {
+                airDate = DateTime.parse(nextUnairedEpisode.airdate!);
+              } catch (_) {
+                return; // Invalid date format, skip this show
               }
             }
 
-            // If found, create UpcomingEpisode
-            if (nextEpisode != null) {
-              DateTime? airDate;
-              if (nextEpisode.airdate != null) {
-                try {
-                  airDate = DateTime.parse(nextEpisode.airdate!);
-                } catch (_) {
-                  // Invalid date format
-                }
-              }
+            // Only include if has valid air date
+            if (airDate == null) return;
 
-              // Only include if airing today or in the future
-              // Skip past episodes completely
-              if (airDate != null &&
-                  !airDate.isBefore(now.subtract(const Duration(days: 1)))) {
-                upcomingEpisodes.add(
-                  UpcomingEpisode(
-                    showId: trackedShow.showId,
-                    showName: trackedShow.name,
-                    posterUrl: trackedShow.posterUrl,
-                    episode: nextEpisode,
-                    airDate: airDate,
-                    airTime: nextEpisode.airtime,
-                  ),
-                );
-              }
-            }
+            // Add to upcoming episodes list
+            upcomingEpisodes.add(
+              UpcomingEpisode(
+                showId: trackedShow.showId,
+                showName: trackedShow.name,
+                posterUrl: trackedShow.posterUrl,
+                episode: nextUnairedEpisode,
+                airDate: airDate,
+                airTime: nextUnairedEpisode.airtime,
+              ),
+            );
           } catch (e) {
             // Skip this show if there's an error
             return;
@@ -107,14 +136,11 @@ final upcomingEpisodesProvider =
         }),
       );
 
-      // Sort by air date (upcoming first, then by date)
+      // Sort by air date (soonest first)
       upcomingEpisodes.sort((a, b) {
-        // Put episodes with no air date at the end
         if (a.airDate == null && b.airDate == null) return 0;
         if (a.airDate == null) return 1;
         if (b.airDate == null) return -1;
-
-        // Sort by air date
         return a.airDate!.compareTo(b.airDate!);
       });
 

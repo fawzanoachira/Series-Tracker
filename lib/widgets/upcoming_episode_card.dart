@@ -99,7 +99,7 @@ class UpcomingEpisodeCard extends ConsumerWidget {
                 ),
               ),
 
-              // Air Date Badge
+              // Air Date Badge with Days Left
               _buildAirDateBadge(context),
             ],
           ),
@@ -119,6 +119,8 @@ class UpcomingEpisodeCard extends ConsumerWidget {
 
   Widget _buildAirDateBadge(BuildContext context) {
     final theme = Theme.of(context);
+    final daysUntil = upcomingEpisode.daysUntilAir;
+
     Color badgeColor;
     Color textColor;
 
@@ -128,29 +130,38 @@ class UpcomingEpisodeCard extends ConsumerWidget {
     } else if (upcomingEpisode.isPast) {
       badgeColor = Colors.orange;
       textColor = Colors.white;
+    } else if (daysUntil == 1) {
+      badgeColor = Colors.blue;
+      textColor = Colors.white;
     } else {
       badgeColor = theme.colorScheme.primaryContainer;
       textColor = theme.colorScheme.onPrimaryContainer;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: badgeColor,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Days left text
           Text(
-            upcomingEpisode.formattedAirDate,
+            upcomingEpisode.daysLeftText,
             style: TextStyle(
               color: textColor,
               fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
+            textAlign: TextAlign.center,
           ),
-          if (upcomingEpisode.airTime != null)
+
+          // Air time if available
+          if (upcomingEpisode.airTime != null) ...[
+            const SizedBox(height: 2),
             Text(
               upcomingEpisode.airTime!,
               style: TextStyle(
@@ -158,6 +169,19 @@ class UpcomingEpisodeCard extends ConsumerWidget {
                 fontSize: 10,
               ),
             ),
+          ],
+
+          // Exact date for episodes more than a week away
+          if (daysUntil > 7 && upcomingEpisode.airDate != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              '${upcomingEpisode.airDate!.month}/${upcomingEpisode.airDate!.day}',
+              style: TextStyle(
+                color: textColor.withValues(alpha: 0.7),
+                fontSize: 9,
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -1,6 +1,5 @@
 import 'package:series_tracker/models/tvmaze/episode.dart';
 
-/// Model representing an upcoming episode for a tracked show
 class UpcomingEpisode {
   final int showId;
   final String showName;
@@ -9,16 +8,21 @@ class UpcomingEpisode {
   final DateTime? airDate;
   final String? airTime;
 
-  const UpcomingEpisode({
+  UpcomingEpisode({
     required this.showId,
     required this.showName,
-    required this.posterUrl,
+    this.posterUrl,
     required this.episode,
-    required this.airDate,
-    required this.airTime,
+    this.airDate,
+    this.airTime,
   });
 
-  /// Check if episode airs today
+  String get episodeIdentifier {
+    final season = episode.season ?? 0;
+    final number = episode.number ?? 0;
+    return 'S${season.toString().padLeft(2, '0')}E${number.toString().padLeft(2, '0')}';
+  }
+
   bool get isToday {
     if (airDate == null) return false;
     final now = DateTime.now();
@@ -27,68 +31,64 @@ class UpcomingEpisode {
         airDate!.day == now.day;
   }
 
-  /// Check if episode aired in the past
   bool get isPast {
     if (airDate == null) return false;
-    return airDate!.isBefore(DateTime.now());
-  }
-
-  /// Get days until air date (negative if already aired)
-  int? get daysUntilAir {
-    if (airDate == null) return null;
     final now = DateTime.now();
-    final difference =
-        airDate!.difference(DateTime(now.year, now.month, now.day));
-    return difference.inDays;
+    final today = DateTime(now.year, now.month, now.day);
+    final epDate = DateTime(airDate!.year, airDate!.month, airDate!.day);
+    return epDate.isBefore(today);
   }
 
-  /// Format air date for display
+  /// Get number of days until air date
+  int get daysUntilAir {
+    if (airDate == null) return 0;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final epDate = DateTime(airDate!.year, airDate!.month, airDate!.day);
+
+    return epDate.difference(today).inDays;
+  }
+
+  /// Get formatted days left text
+  String get daysLeftText {
+    if (airDate == null) return 'Unknown';
+
+    final days = daysUntilAir;
+
+    if (days == 0) return 'Today';
+    if (days == 1) return 'Tomorrow';
+    if (days < 0) return 'Aired';
+    if (days <= 7) return 'in $days days';
+    if (days <= 14) return 'in ${(days / 7).round()} week${days > 10 ? 's' : ''}';
+    if (days <= 30) return 'in ${(days / 7).round()} weeks';
+
+    return formattedAirDate;
+  }
+
   String get formattedAirDate {
     if (airDate == null) return 'TBA';
 
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final tomorrow = today.add(const Duration(days: 1));
-    final episodeDate = DateTime(airDate!.year, airDate!.month, airDate!.day);
+    final difference = airDate!.difference(now);
 
-    if (episodeDate == today) return 'Today';
-    if (episodeDate == tomorrow) return 'Tomorrow';
-
-    final daysUntil = daysUntilAir;
-    if (daysUntil != null && daysUntil > 0 && daysUntil <= 7) {
-      return 'In $daysUntil day${daysUntil == 1 ? '' : 's'}';
+    if (difference.inDays == 0) {
+      return 'Today';
+    } else if (difference.inDays == 1) {
+      return 'Tomorrow';
+    } else if (difference.inDays == -1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 0) {
+      return 'Aired';
+    } else if (difference.inDays <= 7) {
+      // Show day of week for this week
+      final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      return days[airDate!.weekday - 1];
+    } else {
+      // Show date
+      final month = airDate!.month.toString().padLeft(2, '0');
+      final day = airDate!.day.toString().padLeft(2, '0');
+      return '$month/$day';
     }
-
-    // Format as "Jan 15" or "Jan 15, 2026" if different year
-    final monthNames = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ];
-
-    final month = monthNames[airDate!.month - 1];
-    final day = airDate!.day;
-
-    if (airDate!.year != now.year) {
-      return '$month $day, ${airDate!.year}';
-    }
-
-    return '$month $day';
-  }
-
-  /// Episode identifier (e.g., "S01E01")
-  String get episodeIdentifier {
-    final s = (episode.season ?? 0).toString().padLeft(2, '0');
-    final e = (episode.number ?? 0).toString().padLeft(2, '0');
-    return 'S${s}E$e';
   }
 }
