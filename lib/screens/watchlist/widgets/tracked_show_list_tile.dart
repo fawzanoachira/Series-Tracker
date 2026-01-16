@@ -63,10 +63,16 @@ class TrackedShowListTile extends ConsumerWidget {
       final showImages = await tracker.fetchShowImages(showId);
       final seasons = await tracker.getSeasons(showId);
 
+      // Check if seasons list is not empty
+      if (seasons.isEmpty) return;
+
       final targetSeason = seasons.firstWhere(
         (s) => s.number == season,
         orElse: () => seasons.first,
       );
+
+      // Check if season has valid id
+      if (targetSeason.id == null) return;
 
       final episodes = await tracker.getEpisodes(targetSeason.id!);
       final episodeIndex = episodes.indexWhere((e) => e.number == episode);
@@ -83,7 +89,9 @@ class TrackedShowListTile extends ConsumerWidget {
           showImages: showImages,
         ),
       );
-    } catch (_) {}
+    } catch (_) {
+      // Silently fail - this is a non-critical feature
+    }
   }
 
   // ------------------------------------------------
@@ -141,7 +149,7 @@ class TrackedShowListTile extends ConsumerWidget {
     }
 
     return Dismissible(
-      key: ValueKey('${show.showId}-${next?.season}-${next?.episode}'),
+      key: ValueKey('show-${show.showId}'), // Simplified key without nullables
       direction:
           next != null ? DismissDirection.endToStart : DismissDirection.none,
       confirmDismiss: (_) async {
@@ -215,7 +223,7 @@ class TrackedShowListTile extends ConsumerWidget {
               children: [
                 _title(context),
                 const SizedBox(height: 6),
-                _lastWatched(watched),
+                _nextEpisodeInfo(next, progress),
                 const SizedBox(height: 10),
                 _progressBar(progress, next),
                 const SizedBox(height: 10),
@@ -248,24 +256,35 @@ class TrackedShowListTile extends ConsumerWidget {
     );
   }
 
-  Widget _lastWatched(List<TrackedEpisode>? watched) {
-    if (watched == null || watched.isEmpty) {
+  Widget _nextEpisodeInfo(NextEpisode? next, ShowProgress? progress) {
+    // Case 1: No progress data yet (show just added)
+    if (progress == null) {
       return const Text(
-        'Not started yet',
-        style: TextStyle(fontSize: 13, color: Colors.white60),
+        'Loading...',
+        style: TextStyle(fontSize: 13, color: Colors.grey),
       );
     }
 
-    final last = watched.last;
+    // Case 2: Show completed (all episodes watched)
+    if (next == null) {
+      return const Text(
+        'All caught up!',
+        style: TextStyle(fontSize: 13, color: Colors.green),
+      );
+    }
+
+    // Case 3: Show next episode to watch
     return Text(
-      'S${last.season.toString().padLeft(2, '0')}'
-      'E${last.episode.toString().padLeft(2, '0')}',
-      style: const TextStyle(fontSize: 13, color: Colors.white60),
+      'Next: S${next.season.toString().padLeft(2, '0')}'
+      'E${next.episode.toString().padLeft(2, '0')}',
+      style: const TextStyle(fontSize: 13, color: Colors.white),
     );
   }
 
   Widget _progressBar(ShowProgress? progress, NextEpisode? next) {
     if (progress == null) return const SizedBox(height: 6);
+
+    final remaining = progress.totalCount - progress.watchedCount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,13 +308,16 @@ class TrackedShowListTile extends ConsumerWidget {
           children: [
             Text(
               '${progress.watchedCount}/${progress.totalCount}',
-              style: const TextStyle(fontSize: 11, color: Colors.white54),
+              style: const TextStyle(fontSize: 11, color: Colors.white),
             ),
-            if (next != null)
-              Text(
-                '${progress.totalCount - progress.watchedCount} left',
-                style: const TextStyle(fontSize: 11, color: Colors.white54),
+            // Show remaining count for both in-progress and completed shows
+            Text(
+              remaining > 0 ? '$remaining left' : 'Completed',
+              style: TextStyle(
+                fontSize: 11,
+                color: remaining > 0 ? Colors.white : Colors.green,
               ),
+            ),
           ],
         ),
       ],
@@ -319,7 +341,7 @@ class TrackedShowListTile extends ConsumerWidget {
           borderRadius: BorderRadius.circular(6),
         ),
         child: const Text(
-          'View Next',
+          'Episode Info',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w600,
