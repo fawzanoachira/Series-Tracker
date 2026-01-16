@@ -48,19 +48,28 @@ class TrackingActions extends AsyncNotifier<void> {
     required int season,
     required int episode,
   }) async {
-    final repo = ref.read(trackingRepositoryProvider);
+    try {
+      final repo = ref.read(trackingRepositoryProvider);
 
-    await repo.markEpisodeWatched(
-      showId: showId,
-      season: season,
-      episode: episode,
-    );
+      await repo.markEpisodeWatched(
+        showId: showId,
+        season: season,
+        episode: episode,
+      );
 
-    // Increment only THIS show's revision counter
-    ref.read(episodeTrackingRevisionProvider(showId).notifier).state++;
+      // Increment only THIS show's revision counter
+      ref.read(episodeTrackingRevisionProvider(showId).notifier).state++;
 
-    // Check if show should be marked as completed
-    await _checkAndUpdateShowStatus(showId);
+      // Check if show should be marked as completed
+      await _checkAndUpdateShowStatus(showId);
+    } catch (e) {
+      // If episode hasn't aired, silently ignore or rethrow based on your needs
+      if (e.toString().contains('unaired')) {
+        // You can show a snackbar or toast here if needed
+        rethrow;
+      }
+      rethrow;
+    }
   }
 
   Future<void> markEpisodeUnwatched({

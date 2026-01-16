@@ -17,6 +17,82 @@ class TrackingRepository {
     _episodeDao = EpisodeDao(_database);
   }
 
+  /// Helper method to check if an episode has aired
+  /// Considers both airdate and airtime if available
+  bool _hasEpisodeAired(String? airdate, [String? airtime]) {
+    if (airdate == null || airdate.isEmpty) {
+      return false; // If no airdate, consider it not aired
+    }
+
+    try {
+      DateTime episodeDateTime;
+
+      if (airtime != null && airtime.isNotEmpty) {
+        // Combine airdate and airtime (format: "HH:MM")
+        // TVMaze uses local time for the show's network
+        final dateParts = airdate.split('-');
+        final timeParts = airtime.split(':');
+
+        episodeDateTime = DateTime(
+          int.parse(dateParts[0]), // year
+          int.parse(dateParts[1]), // month
+          int.parse(dateParts[2]), // day
+          int.parse(timeParts[0]), // hour
+          timeParts.length > 1 ? int.parse(timeParts[1]) : 0, // minute
+        );
+      } else {
+        // Only airdate available, assume end of day
+        episodeDateTime =
+            DateTime.parse(airdate).add(const Duration(hours: 23, minutes: 59));
+      }
+
+      final now = DateTime.now();
+
+      // Episode has aired if the datetime is in the past
+      return episodeDateTime.isBefore(now);
+    } catch (e) {
+      // If parsing fails, fall back to date-only comparison
+      try {
+        final episodeDate = DateTime.parse(airdate);
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final epDate =
+            DateTime(episodeDate.year, episodeDate.month, episodeDate.day);
+
+        return epDate.isBefore(today);
+      } catch (e) {
+        return false; // If all parsing fails, consider it not aired
+      }
+    }
+  }
+
+  /// Helper method to get episode data from API
+  Future<({String? airdate, String? airtime})?> _getEpisodeData({
+    required int showId,
+    required int season,
+    required int episode,
+  }) async {
+    try {
+      final seasons = await tracker.getSeasons(showId);
+
+      for (final seasonData in seasons) {
+        if (seasonData.number == season && seasonData.id != null) {
+          final episodes = await tracker.getEpisodes(seasonData.id!);
+
+          for (final ep in episodes) {
+            if (ep.number == episode) {
+              return (airdate: ep.airdate, airtime: ep.airtime);
+            }
+          }
+        }
+      }
+
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   // -------- Shows --------
   Future<void> addShow(Show show) async {
     final trackedShow = TrackedShow(
@@ -57,6 +133,18 @@ class TrackingRepository {
     required int season,
     required int episode,
   }) async {
+    // Check if episode has aired before allowing tracking
+    final episodeData = await _getEpisodeData(
+      showId: showId,
+      season: season,
+      episode: episode,
+    );
+
+    if (episodeData == null ||
+        !_hasEpisodeAired(episodeData.airdate, episodeData.airtime)) {
+      throw Exception('Cannot mark unaired episode as watched');
+    }
+
     await _episodeDao.markWatched(
       showId: showId,
       season: season,
@@ -77,14 +165,39 @@ class TrackingRepository {
   }
 
   /// Batch mark multiple episodes - optimized for bulk operations
+  /// Only marks episodes that have already aired
   Future<void> markMultipleEpisodesWatched({
     required int showId,
     required List<({int season, int episode})> episodes,
   }) async {
-    await _episodeDao.markMultipleWatched(
-      showId: showId,
-      episodes: episodes,
-    );
+    // Fetch all episodes for the show to check airdates
+    final seasons = await tracker.getSeasons(showId);
+    final List<Episode> allEpisodes = [];
+
+    for (final seasonData in seasons) {
+      if (seasonData.id != null) {
+        final seasonEpisodes = await tracker.getEpisodes(seasonData.id!);
+        allEpisodes.addAll(seasonEpisodes);
+      }
+    }
+
+    // Filter episodes to only include those that have aired
+    final airedEpisodes = episodes.where((ep) {
+      final matchingEpisode = allEpisodes.firstWhere(
+        (apiEp) => apiEp.season == ep.season && apiEp.number == ep.episode,
+        orElse: () => Episode(),
+      );
+
+      return _hasEpisodeAired(matchingEpisode.airdate, matchingEpisode.airtime);
+    }).toList();
+
+    // Only mark episodes that have aired
+    if (airedEpisodes.isNotEmpty) {
+      await _episodeDao.markMultipleWatched(
+        showId: showId,
+        episodes: airedEpisodes,
+      );
+    }
   }
 
   /// Batch unmark multiple episodes - optimized for bulk operations
@@ -139,6 +252,13 @@ class TrackingRepository {
 
       if (allEpisodes.isEmpty) return false;
 
+      // Filter to only aired episodes
+      final airedEpisodes = allEpisodes
+          .where((ep) => _hasEpisodeAired(ep.airdate, ep.airtime))
+          .toList();
+
+      if (airedEpisodes.isEmpty) return false;
+
       // Get watched episodes from database
       final watchedEpisodes = await _episodeDao.getEpisodesForShow(showId);
 
@@ -146,8 +266,8 @@ class TrackingRepository {
       final watchedSet =
           watchedEpisodes.map((e) => '${e.season}-${e.episode}').toSet();
 
-      // Check if all episodes are watched
-      final allWatched = allEpisodes.every((ep) {
+      // Check if all AIRED episodes are watched
+      final allWatched = airedEpisodes.every((ep) {
         final key = '${ep.season ?? 0}-${ep.number ?? 0}';
         return watchedSet.contains(key);
       });
