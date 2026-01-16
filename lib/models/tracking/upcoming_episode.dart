@@ -61,7 +61,7 @@ class UpcomingEpisode {
     if (days < 0) return 'Aired';
 
     // Show exact day count for all future episodes
-    if (days == 2) return 'in 2 days';
+    if (days == 2) return 'In 2 days';
     return 'in $days days';
   }
 

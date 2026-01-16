@@ -120,13 +120,30 @@ class _MyShowsScreenState extends ConsumerState<MyShowsScreen> {
                     }
 
                     // Separate episodes by status
+                    final pastEpisodes =
+                        upcomingEpisodes.where((ep) => ep.isPast).toList();
                     final todayEpisodes =
                         upcomingEpisodes.where((ep) => ep.isToday).toList();
-                    final futureEpisodes =
-                        upcomingEpisodes.where((ep) => !ep.isToday).toList();
+                    final futureEpisodes = upcomingEpisodes
+                        .where((ep) => !ep.isToday && !ep.isPast)
+                        .toList();
 
                     return SliverList(
                       delegate: SliverChildListDelegate([
+                        // Recently Aired Episodes
+                        if (pastEpisodes.isNotEmpty) ...[
+                          _buildSectionHeader(
+                            context,
+                            'Recently Aired',
+                            pastEpisodes.length,
+                            Colors.orange,
+                          ),
+                          ...pastEpisodes.map(
+                            (ep) => UpcomingEpisodeCard(upcomingEpisode: ep),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+
                         // Today's Episodes
                         if (todayEpisodes.isNotEmpty) ...[
                           _buildSectionHeader(
@@ -247,14 +264,14 @@ class _MyShowsScreenState extends ConsumerState<MyShowsScreen> {
       (index) => Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         child: Container(
-          height: 90,
+          height: 110,
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
               // Skeleton poster
               Container(
-                width: 60,
-                height: 90,
+                width: 70,
+                height: 100,
                 decoration: BoxDecoration(
                   color: Colors.grey[800],
                   borderRadius: BorderRadius.circular(8),
@@ -286,6 +303,15 @@ class _MyShowsScreenState extends ConsumerState<MyShowsScreen> {
                     const SizedBox(height: 8),
                     Container(
                       width: 120,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[800],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
                       height: 10,
                       decoration: BoxDecoration(
                         color: Colors.grey[800],

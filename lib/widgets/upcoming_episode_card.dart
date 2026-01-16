@@ -17,13 +17,15 @@ class UpcomingEpisodeCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final episode = upcomingEpisode.episode;
     final theme = Theme.of(context);
+    final imageUrl = episode.image?.medium ?? upcomingEpisode.posterUrl;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      shadowColor: Colors.black.withValues(alpha: 0.2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         onTap: () {
           final showModel = Show(
             id: upcomingEpisode.showId,
@@ -44,67 +46,67 @@ class UpcomingEpisodeCard extends ConsumerWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // Show Poster
+              // Episode/Show Poster
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: upcomingEpisode.posterUrl != null
+                child: imageUrl != null
                     ? Image.network(
-                        upcomingEpisode.posterUrl!,
-                        width: 60,
-                        height: 90,
+                        imageUrl,
+                        width: 70,
+                        height: 100,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => _buildPlaceholder(),
                       )
                     : _buildPlaceholder(),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
 
               // Episode Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Show Name with Season Badge if new season
+                    // Show Name
                     Row(
                       children: [
                         Expanded(
                           child: Text(
                             upcomingEpisode.showName,
-                            style: theme.textTheme.titleSmall?.copyWith(
+                            style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+
+                    // Episode Identifier (S01E01)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            upcomingEpisode.episodeIdentifier,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                         if (upcomingEpisode.isNewSeason) ...[
                           const SizedBox(width: 4),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.amber,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
+                                horizontal: 8, vertical: 4),
                             child: const Row(
-                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.star,
-                                  size: 10,
-                                  color: Colors.black,
-                                ),
-                                SizedBox(width: 2),
-                                Text(
-                                  'NEW',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
+                                  Icons.star_rate_rounded,
+                                  size: 20,
+                                  color: Color.fromARGB(255, 255, 196, 0),
+                                )
                               ],
                             ),
                           ),
@@ -113,29 +115,22 @@ class UpcomingEpisodeCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
 
-                    // Episode Identifier (S01E01)
-                    Text(
-                      upcomingEpisode.episodeIdentifier,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-
                     // Episode Name
-                    if (episode.name != null)
+                    if (episode.name != null && episode.name!.isNotEmpty)
                       Text(
                         episode.name!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[400],
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey[300],
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                    const SizedBox(height: 4),
                   ],
                 ),
               ),
+
+              const SizedBox(width: 12),
 
               // Air Date Badge with Days Left
               _buildAirDateBadge(context),
@@ -148,10 +143,10 @@ class UpcomingEpisodeCard extends ConsumerWidget {
 
   Widget _buildPlaceholder() {
     return Container(
-      width: 60,
-      height: 90,
+      width: 70,
+      height: 100,
       color: Colors.grey[850],
-      child: const Icon(Icons.tv, size: 32, color: Colors.grey),
+      child: const Icon(Icons.tv, size: 36, color: Colors.grey),
     );
   }
 
@@ -163,13 +158,13 @@ class UpcomingEpisodeCard extends ConsumerWidget {
     Color textColor;
 
     if (upcomingEpisode.isToday) {
-      badgeColor = Colors.green;
+      badgeColor = Colors.green[700]!;
       textColor = Colors.white;
     } else if (upcomingEpisode.isPast) {
-      badgeColor = Colors.orange;
+      badgeColor = Colors.orange[700]!;
       textColor = Colors.white;
     } else if (daysUntil == 1) {
-      badgeColor = Colors.blue;
+      badgeColor = Colors.blue[700]!;
       textColor = Colors.white;
     } else {
       badgeColor = theme.colorScheme.primaryContainer;
@@ -177,10 +172,17 @@ class UpcomingEpisodeCard extends ConsumerWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: badgeColor,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: badgeColor.withValues(alpha: 0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -191,7 +193,7 @@ class UpcomingEpisodeCard extends ConsumerWidget {
             upcomingEpisode.daysLeftText,
             style: TextStyle(
               color: textColor,
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
@@ -199,25 +201,25 @@ class UpcomingEpisodeCard extends ConsumerWidget {
 
           // Air time if available
           if (upcomingEpisode.airTime != null) ...[
-            const SizedBox(height: 3),
+            const SizedBox(height: 4),
             Text(
               upcomingEpisode.airTime!,
               style: TextStyle(
-                color: textColor.withValues(alpha: 0.8),
-                fontSize: 10,
+                color: textColor.withValues(alpha: 0.9),
+                fontSize: 11,
               ),
             ),
           ],
 
           // Exact date
           if (upcomingEpisode.airDate != null) ...[
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Text(
               '${upcomingEpisode.airDate!.month.toString().padLeft(2, '0')}/'
               '${upcomingEpisode.airDate!.day.toString().padLeft(2, '0')}',
               style: TextStyle(
-                color: textColor.withValues(alpha: 0.75),
-                fontSize: 9,
+                color: textColor.withValues(alpha: 0.8),
+                fontSize: 10,
               ),
             ),
           ],
