@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:series_tracker/models/tracking/tracked_show.dart';
 import 'package:series_tracker/providers/tracked_shows_provider.dart';
 import 'package:series_tracker/providers/upcoming_episodes_provider.dart';
@@ -44,7 +45,15 @@ class _MyShowsScreenState extends ConsumerState<MyShowsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Shows'),
+        title: Text(
+          "Lahv",
+          key: const ValueKey('title'),
+          style: GoogleFonts.poppins(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            // You can customize further: color, etc.
+          ),
+        ),
         actions: [
           if (_isRefreshing)
             const Padding(
