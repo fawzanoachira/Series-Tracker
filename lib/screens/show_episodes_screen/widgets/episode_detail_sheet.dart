@@ -52,16 +52,25 @@ class _EpisodeDetailSheetState extends ConsumerState<EpisodeDetailSheet> {
         children: [
           _dragHandle(),
           const SizedBox(height: 12),
-          _imageSection(context),
-          const SizedBox(height: 12),
-          _title(context),
-          const SizedBox(height: 4),
-          _meta(context),
-          const SizedBox(height: 12),
-          _watchAction(isWatched, hasAired),
-          const SizedBox(height: 12),
-          _summary(context),
-          const SizedBox(height: 16),
+          Flexible(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  _imageSection(context),
+                  const SizedBox(height: 12),
+                  _title(context),
+                  const SizedBox(height: 4),
+                  _meta(context),
+                  const SizedBox(height: 12),
+                  _watchAction(isWatched, hasAired),
+                  const SizedBox(height: 12),
+                  _summary(context),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
