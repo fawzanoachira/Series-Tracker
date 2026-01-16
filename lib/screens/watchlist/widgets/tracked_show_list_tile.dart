@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:series_tracker/api/tracker.dart' as tracker;
 import 'package:series_tracker/models/tracking/tracked_episode.dart';
 import 'package:series_tracker/models/tracking/tracked_show.dart';
+import 'package:series_tracker/models/tvmaze/episode.dart';
 import 'package:series_tracker/models/tvmaze/image_tvmaze.dart';
 import 'package:series_tracker/models/tvmaze/show.dart';
 import 'package:series_tracker/providers/episode_progress_provider.dart';
@@ -50,8 +51,44 @@ class TrackedShowListTile extends ConsumerWidget {
   }
 
   // ------------------------------------------------
-  // Episode Sheet
+  // Episode Sheet - Shows ALL aired episodes from ALL seasons
   // ------------------------------------------------
+
+  /// Helper to check if episode has aired
+  bool _hasEpisodeAired(String? airdate, [String? airtime]) {
+    if (airdate == null || airdate.isEmpty) {
+      return false;
+    }
+
+    try {
+      DateTime episodeDateTime;
+
+      if (airtime != null && airtime.isNotEmpty) {
+        final dateParts = airdate.split('-');
+        final timeParts = airtime.split(':');
+
+        if (dateParts.length != 3 || timeParts.isEmpty) {
+          return false;
+        }
+
+        episodeDateTime = DateTime(
+          int.parse(dateParts[0]),
+          int.parse(dateParts[1]),
+          int.parse(dateParts[2]),
+          int.parse(timeParts[0]),
+          timeParts.length > 1 ? int.parse(timeParts[1]) : 0,
+        );
+      } else {
+        episodeDateTime =
+            DateTime.parse(airdate).add(const Duration(hours: 23, minutes: 59));
+      }
+
+      final now = DateTime.now();
+      return episodeDateTime.isBefore(now);
+    } catch (e) {
+      return false;
+    }
+  }
 
   Future<void> _showNextEpisodeSheet(
     BuildContext context,
@@ -66,26 +103,50 @@ class TrackedShowListTile extends ConsumerWidget {
       // Check if seasons list is not empty
       if (seasons.isEmpty) return;
 
-      final targetSeason = seasons.firstWhere(
-        (s) => s.number == season,
-        orElse: () => seasons.first,
+      // Fetch ALL episodes from ALL seasons
+      final List<Episode> allEpisodes = [];
+      for (final seasonData in seasons) {
+        if (seasonData.id != null) {
+          final seasonEpisodes = await tracker.getEpisodes(seasonData.id!);
+          allEpisodes.addAll(seasonEpisodes);
+        }
+      }
+
+      if (allEpisodes.isEmpty) return;
+
+      // Sort episodes by season and number
+      allEpisodes.sort((a, b) {
+        final aSeason = a.season ?? 0;
+        final bSeason = b.season ?? 0;
+        if (aSeason != bSeason) return aSeason.compareTo(bSeason);
+        return (a.number ?? 0).compareTo(b.number ?? 0);
+      });
+
+      // Filter to only aired episodes
+      final airedEpisodes = allEpisodes.where((ep) {
+        return _hasEpisodeAired(ep.airdate, ep.airtime);
+      }).toList();
+
+      if (airedEpisodes.isEmpty) return;
+
+      // Find the index of the target episode (next episode to watch)
+      final episodeIndex = airedEpisodes.indexWhere(
+        (e) => e.season == season && e.number == episode,
       );
 
-      // Check if season has valid id
-      if (targetSeason.id == null) return;
+      // If target episode not found, start from first aired episode
+      final initialIndex = episodeIndex >= 0 ? episodeIndex : 0;
 
-      final episodes = await tracker.getEpisodes(targetSeason.id!);
-      final episodeIndex = episodes.indexWhere((e) => e.number == episode);
-
-      if (episodeIndex == -1 || !context.mounted) return;
+      if (!context.mounted) return;
 
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
+        backgroundColor: Colors.transparent,
         builder: (_) => EpisodeCarouselSheet(
           showId: showId,
-          episodes: episodes,
-          initialIndex: episodeIndex,
+          episodes: airedEpisodes,
+          initialIndex: initialIndex,
           showImages: showImages,
         ),
       );
