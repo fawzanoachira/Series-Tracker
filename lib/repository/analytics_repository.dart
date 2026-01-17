@@ -162,12 +162,30 @@ class AnalyticsRepository {
 
     int totalWatched = 0;
     int totalAired = 0;
+    int totalSeasons = 0;
 
     for (final show in shows) {
       try {
         final seasons = await tracker.getSeasons(show.showId);
-        final List<Episode> allEpisodes = [];
 
+        // Count unique seasons
+        final uniqueSeasons =
+            seasons.where((s) => s.number != null && s.number! > 0).length;
+        totalSeasons += uniqueSeasons;
+
+        // Fetch only first few episodes to check if show has content
+        // This is much faster than fetching all episodes
+        if (seasons.isEmpty) continue;
+
+        final firstSeason = seasons.first;
+        if (firstSeason.id == null) continue;
+
+        // Quick check: if first season has episodes, count all
+        final sampleEpisodes = await tracker.getEpisodes(firstSeason.id!);
+        if (sampleEpisodes.isEmpty) continue;
+
+        // Now fetch all episodes (we know show has content)
+        final List<Episode> allEpisodes = [];
         for (final season in seasons) {
           if (season.id != null) {
             final seasonEps = await tracker.getEpisodes(season.id!);
@@ -193,6 +211,7 @@ class AnalyticsRepository {
       totalEpisodesWatched: totalWatched,
       totalEpisodesRemaining: remaining,
       totalAvailableEpisodes: totalAired,
+      totalSeasonCount: totalSeasons,
       completionPercentage: completion,
     );
   }
@@ -204,6 +223,11 @@ class AnalyticsRepository {
 
     final totalMinutes = watchedEpisodes.length * _avgEpisodeMinutes;
     final totalHours = totalMinutes ~/ 60;
+
+    // Calculate months and days
+    final totalDays = totalHours ~/ 24;
+    final totalMonths = totalDays ~/ 30;
+    final remainingDays = totalDays % 30;
 
     // Calculate time span
     double avgMinutesPerDay = 0.0;
@@ -235,6 +259,8 @@ class AnalyticsRepository {
     return TimeAnalytics(
       totalHoursWatched: totalHours,
       totalMinutesWatched: totalMinutes,
+      totalMonths: totalMonths,
+      totalDays: remainingDays, // Days remaining after months
       averageMinutesPerDay: avgMinutesPerDay,
       averageMinutesPerWeek: avgMinutesPerWeek,
       estimatedHoursRemaining: remainingHours,
@@ -362,7 +388,7 @@ class AnalyticsRepository {
   }
 
   /// Get top shows by episodes watched
-  Future<List<ShowInsight>> getTopShows({int limit = 5}) async {
+  Future<List<ShowInsight>> getTopShows({int limit = 3}) async {
     final shows = await _getAllShows();
     final insights = <ShowInsight>[];
 
@@ -374,6 +400,11 @@ class AnalyticsRepository {
         if (watchedEps.isEmpty) continue;
 
         final seasons = await tracker.getSeasons(show.showId);
+
+        // Count unique seasons
+        final seasonCount =
+            seasons.where((s) => s.number != null && s.number! > 0).length;
+
         final List<Episode> allEpisodes = [];
 
         for (final season in seasons) {
@@ -405,6 +436,7 @@ class AnalyticsRepository {
           posterUrl: show.posterUrl,
           episodesWatched: watchedEps.length,
           totalEpisodes: totalAired.length,
+          seasonCount: seasonCount,
           hoursWatched: (watchedEps.length * _avgEpisodeMinutes) ~/ 60,
           completionPercentage: totalAired.isNotEmpty
               ? (watchedEps.length / totalAired.length) * 100
@@ -454,6 +486,11 @@ class AnalyticsRepository {
 
         if (daysSinceWatch >= daysSince) {
           final seasons = await tracker.getSeasons(show.showId);
+
+          // Count unique seasons
+          final seasonCount =
+              seasons.where((s) => s.number != null && s.number! > 0).length;
+
           final List<Episode> allEpisodes = [];
 
           for (final season in seasons) {
@@ -472,6 +509,7 @@ class AnalyticsRepository {
             posterUrl: show.posterUrl,
             episodesWatched: watchedEps.length,
             totalEpisodes: totalAired.length,
+            seasonCount: seasonCount,
             hoursWatched: (watchedEps.length * _avgEpisodeMinutes) ~/ 60,
             completionPercentage: totalAired.isNotEmpty
                 ? (watchedEps.length / totalAired.length) * 100

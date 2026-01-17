@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lahv/models/analytics/analytics_models.dart';
-import 'package:lahv/providers/analytics_providers.dart';
-import 'package:lahv/providers/tracked_shows_provider.dart';
+import 'package:lahv/providers/cached_analytics_providers.dart'; // ✅ Changed import
 import 'package:lahv/screens/analytics/widgets/activity_heatmap.dart';
 import 'package:lahv/screens/analytics/widgets/pie_chart.dart';
 import 'package:lahv/screens/analytics/widgets/progress_chart.dart';
@@ -15,28 +14,24 @@ class AnalyticsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final analyticsAsync = ref.watch(completeAnalyticsProvider);
-
-    // Listen to tracked shows changes to auto-refresh analytics
-    ref.listen(trackedShowsProvider, (previous, next) {
-      // When tracked shows change, invalidate analytics
-      ref.invalidate(completeAnalyticsProvider);
-    });
+    // ✅ FIXED: Using cached provider instead of slow repository
+    final analyticsAsync = ref.watch(cachedCompleteAnalyticsProvider);
 
     return Scaffold(
       body: analyticsAsync.when(
         data: (analytics) => RefreshIndicator(
           onRefresh: () async {
-            ref.invalidate(completeAnalyticsProvider);
-            await ref.read(completeAnalyticsProvider.future);
+            // ✅ FIXED: Invalidate cache on refresh
+            ref.invalidate(cachedCompleteAnalyticsProvider);
+            await ref.read(cachedCompleteAnalyticsProvider.future);
           },
           child: _AnalyticsContent(analytics: analytics),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => RefreshIndicator(
           onRefresh: () async {
-            ref.invalidate(completeAnalyticsProvider);
-            await ref.read(completeAnalyticsProvider.future);
+            ref.invalidate(cachedCompleteAnalyticsProvider);
+            await ref.read(cachedCompleteAnalyticsProvider.future);
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -59,7 +54,7 @@ class AnalyticsScreen extends ConsumerWidget {
                     const SizedBox(height: 16),
                     FilledButton.icon(
                       onPressed: () =>
-                          ref.invalidate(completeAnalyticsProvider),
+                          ref.invalidate(cachedCompleteAnalyticsProvider),
                       icon: const Icon(Icons.refresh),
                       label: const Text('Retry'),
                     ),
@@ -74,6 +69,7 @@ class AnalyticsScreen extends ConsumerWidget {
   }
 }
 
+// Rest of the code remains the same...
 class _AnalyticsContent extends StatelessWidget {
   final CompleteAnalytics analytics;
 
@@ -305,7 +301,7 @@ class _ProgressSection extends StatelessWidget {
           title: 'Overall Progress',
           percentage: progress.completionPercentage,
           subtitle:
-              '${progress.totalEpisodesWatched} of ${progress.totalAvailableEpisodes} episodes watched',
+              '${progress.totalEpisodesWatched} of ${progress.totalAvailableEpisodes} episodes • ${progress.totalSeasonCount} seasons',
           color: Colors.green,
         ),
         const SizedBox(height: 16),
@@ -340,6 +336,14 @@ class _TimeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Format total watched time
+    String totalWatchedText;
+    if (time.totalMonths > 0) {
+      totalWatchedText = '${time.totalMonths}mo ${time.totalDays}d';
+    } else {
+      totalWatchedText = '${time.totalHoursWatched}h';
+    }
+
     return Column(
       children: [
         Row(
@@ -347,8 +351,9 @@ class _TimeSection extends StatelessWidget {
             Expanded(
               child: StatCard(
                 title: 'Total Watched',
-                value: '${time.totalHoursWatched}h',
-                subtitle: '${time.totalMinutesWatched} minutes',
+                value: totalWatchedText,
+                subtitle:
+                    '${time.totalHoursWatched}h ${time.totalMinutesWatched % 60}m total',
                 icon: Icons.access_time,
                 color: Colors.purple,
               ),

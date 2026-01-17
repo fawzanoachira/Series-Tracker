@@ -8,7 +8,7 @@ class ActivityHeatmap extends StatelessWidget {
   const ActivityHeatmap({
     super.key,
     required this.activities,
-    this.cellSize = 32,
+    this.cellSize = 12,
   });
 
   @override
@@ -30,6 +30,11 @@ class ActivityHeatmap extends StatelessWidget {
         .map((a) => a.episodesWatched)
         .reduce((a, b) => a > b ? a : b);
 
+    // Calculate grid dimensions
+    final totalDays = activities.length;
+    final fullWeeks = totalDays ~/ 7;
+    final remainingDays = totalDays % 7;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -40,82 +45,179 @@ class ActivityHeatmap extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        SizedBox(
-          height: cellSize * 7 + 48, // 7 rows + spacing
-          child: ListView.builder(
+
+        // GitHub-style grid
+        _buildGitHubStyleGrid(
+          context,
+          activities,
+          maxEpisodes,
+          fullWeeks,
+          remainingDays,
+        ),
+
+        const SizedBox(height: 12),
+
+        // Legend
+        _buildLegend(context, theme),
+      ],
+    );
+  }
+
+  Widget _buildGitHubStyleGrid(
+    BuildContext context,
+    List<DailyActivity> activities,
+    int maxEpisodes,
+    int fullWeeks,
+    int remainingDays,
+  ) {
+    // Organize activities into weeks (columns)
+    final weeks = <List<DailyActivity>>[];
+
+    for (int weekIndex = 0; weekIndex < fullWeeks; weekIndex++) {
+      final weekStart = weekIndex * 7;
+      final weekActivities = activities.sublist(weekStart, weekStart + 7);
+      weeks.add(weekActivities);
+    }
+
+    // Add remaining days as the last column
+    if (remainingDays > 0) {
+      final lastWeekActivities = activities.sublist(fullWeeks * 7);
+      weeks.add(lastWeekActivities);
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Day labels
+        _buildDayLabels(context),
+        const SizedBox(width: 8),
+
+        // Activity grid
+        Expanded(
+          child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            itemCount: (activities.length / 7).ceil(),
-            itemBuilder: (context, weekIndex) {
-              final weekStart = weekIndex * 7;
-              // final weekEnd = math.min(weekStart + 7, activities.length);
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: weeks.asMap().entries.map((entry) {
+                final isLastWeek = entry.key == weeks.length - 1;
+                final weekActivities = entry.value;
 
-              return Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: Column(
-                  children: List.generate(7, (dayIndex) {
-                    final activityIndex = weekStart + dayIndex;
-
-                    if (activityIndex >= activities.length) {
-                      return SizedBox(
-                        width: cellSize,
-                        height: cellSize,
-                      );
-                    }
-
-                    final activity = activities[activityIndex];
-                    final intensity = maxEpisodes > 0
-                        ? activity.episodesWatched / maxEpisodes
-                        : 0.0;
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: _ActivityCell(
-                        activity: activity,
-                        intensity: intensity,
-                        size: cellSize,
-                      ),
-                    );
-                  }),
-                ),
-              );
-            },
+                return _buildWeekColumn(
+                  context,
+                  weekActivities,
+                  maxEpisodes,
+                  isLastWeek,
+                );
+              }).toList(),
+            ),
           ),
         ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Text(
-              'Less',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
-            ),
-            const SizedBox(width: 4),
-            ...List.generate(5, (index) {
-              final intensity = (index + 1) / 5;
-              return Padding(
-                padding: const EdgeInsets.only(right: 2),
-                child: Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: _getColorForIntensity(
-                      intensity,
-                      theme.colorScheme.primary,
-                    ),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+      ],
+    );
+  }
+
+  Widget _buildDayLabels(BuildContext context) {
+    final theme = Theme.of(context);
+    final labels = ['Mon', 'Wed', 'Fri'];
+    final positions = [0, 2, 4];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: List.generate(7, (index) {
+        final labelIndex = positions.indexOf(index);
+        if (labelIndex != -1) {
+          return SizedBox(
+            height: cellSize + 2,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                labels[labelIndex],
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontSize: 9,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
-              );
-            }),
-            const SizedBox(width: 4),
-            Text(
-              'More',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
-          ],
+          );
+        }
+        return SizedBox(height: cellSize + 2);
+      }),
+    );
+  }
+
+  Widget _buildWeekColumn(
+    BuildContext context,
+    List<DailyActivity> weekActivities,
+    int maxEpisodes,
+    bool isLastWeek,
+  ) {
+    final cellCount = weekActivities.length;
+
+    // Calculate padding for centering last column
+    double topPadding = 0;
+    if (isLastWeek && cellCount < 7) {
+      final emptyCells = 7 - cellCount;
+      topPadding = (emptyCells * (cellSize + 2)) / 2;
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(right: 2, top: topPadding),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ...weekActivities.map((activity) {
+            final intensity =
+                maxEpisodes > 0 ? activity.episodesWatched / maxEpisodes : 0.0;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: _ActivityCell(
+                activity: activity,
+                intensity: intensity,
+                size: cellSize,
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegend(BuildContext context, ThemeData theme) {
+    return Row(
+      children: [
+        Text(
+          'Less',
+          style: theme.textTheme.labelSmall?.copyWith(
+            fontSize: 10,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
+        ),
+        const SizedBox(width: 4),
+        ...List.generate(5, (index) {
+          final intensity = (index + 1) / 5;
+          return Padding(
+            padding: const EdgeInsets.only(right: 2),
+            child: Container(
+              width: cellSize,
+              height: cellSize,
+              decoration: BoxDecoration(
+                color: _getColorForIntensity(
+                  intensity,
+                  theme.colorScheme.primary,
+                ),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          );
+        }),
+        const SizedBox(width: 4),
+        Text(
+          'More',
+          style: theme.textTheme.labelSmall?.copyWith(
+            fontSize: 10,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
         ),
       ],
     );
@@ -156,7 +258,7 @@ class _ActivityCell extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(2),
         ),
       ),
     );

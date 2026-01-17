@@ -37,8 +37,7 @@ class ShowInsightCard extends StatelessWidget {
                           color: theme.colorScheme.surfaceContainerHighest,
                           child: Icon(
                             Icons.tv,
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.3),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                           ),
                         ),
                 ),
@@ -60,18 +59,16 @@ class ShowInsightCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${insight.episodesWatched} / ${insight.totalEpisodes} episodes',
+                      '${insight.seasonCount} ${insight.seasonCount == 1 ? 'season' : 'seasons'} • ${insight.episodesWatched} / ${insight.totalEpisodes} episodes',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${insight.hoursWatched}h watched',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -108,8 +105,7 @@ class ShowInsightCard extends StatelessWidget {
                     Text(
                       _formatLastWatched(insight.daysSinceLastWatch),
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
                     ),
                   ],

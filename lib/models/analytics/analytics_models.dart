@@ -60,12 +60,14 @@ class EpisodeProgressAnalytics {
   final int totalEpisodesWatched;
   final int totalEpisodesRemaining;
   final int totalAvailableEpisodes;
+  final int totalSeasonCount;
   final double completionPercentage;
 
   const EpisodeProgressAnalytics({
     required this.totalEpisodesWatched,
     required this.totalEpisodesRemaining,
     required this.totalAvailableEpisodes,
+    required this.totalSeasonCount,
     required this.completionPercentage,
   });
 
@@ -74,6 +76,7 @@ class EpisodeProgressAnalytics {
       totalEpisodesWatched: 0,
       totalEpisodesRemaining: 0,
       totalAvailableEpisodes: 0,
+      totalSeasonCount: 0,
       completionPercentage: 0.0,
     );
   }
@@ -83,6 +86,8 @@ class EpisodeProgressAnalytics {
 class TimeAnalytics {
   final int totalHoursWatched;
   final int totalMinutesWatched;
+  final int totalMonths;
+  final int totalDays;
   final double averageMinutesPerDay;
   final double averageMinutesPerWeek;
   final int estimatedHoursRemaining;
@@ -91,6 +96,8 @@ class TimeAnalytics {
   const TimeAnalytics({
     required this.totalHoursWatched,
     required this.totalMinutesWatched,
+    required this.totalMonths,
+    required this.totalDays,
     required this.averageMinutesPerDay,
     required this.averageMinutesPerWeek,
     required this.estimatedHoursRemaining,
@@ -101,6 +108,8 @@ class TimeAnalytics {
     return const TimeAnalytics(
       totalHoursWatched: 0,
       totalMinutesWatched: 0,
+      totalMonths: 0,
+      totalDays: 0,
       averageMinutesPerDay: 0.0,
       averageMinutesPerWeek: 0.0,
       estimatedHoursRemaining: 0,
@@ -155,6 +164,7 @@ class ShowInsight {
   final String? posterUrl;
   final int episodesWatched;
   final int totalEpisodes;
+  final int seasonCount;
   final int hoursWatched;
   final double completionPercentage;
   final DateTime? lastWatchedAt;
@@ -166,6 +176,7 @@ class ShowInsight {
     this.posterUrl,
     required this.episodesWatched,
     required this.totalEpisodes,
+    required this.seasonCount,
     required this.hoursWatched,
     required this.completionPercentage,
     this.lastWatchedAt,

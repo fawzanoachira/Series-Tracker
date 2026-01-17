@@ -20,6 +20,9 @@ class TrackingActions extends AsyncNotifier<void> {
       ref.invalidate(trackedShowsProvider);
       ref.invalidate(isShowTrackedProvider(show.id!));
 
+      // ✅ Invalidate analytics when show is added
+      ref.read(analyticsRevisionProvider.notifier).state++;
+
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -34,6 +37,9 @@ class TrackingActions extends AsyncNotifier<void> {
 
       ref.invalidate(trackedShowsProvider);
       ref.invalidate(isShowTrackedProvider(showId));
+
+      // ✅ Invalidate analytics when show is removed
+      ref.read(analyticsRevisionProvider.notifier).state++;
 
       state = const AsyncData(null);
     } catch (e, st) {
@@ -59,6 +65,9 @@ class TrackingActions extends AsyncNotifier<void> {
 
       // Increment only THIS show's revision counter
       ref.read(episodeTrackingRevisionProvider(showId).notifier).state++;
+
+      // ✅ ADDED: Increment global analytics revision
+      ref.read(analyticsRevisionProvider.notifier).state++;
 
       // Check if show should be marked as completed
       await _checkAndUpdateShowStatus(showId);
@@ -88,6 +97,9 @@ class TrackingActions extends AsyncNotifier<void> {
     // Increment only THIS show's revision counter
     ref.read(episodeTrackingRevisionProvider(showId).notifier).state++;
 
+    // ✅ ADDED: Increment global analytics revision
+    ref.read(analyticsRevisionProvider.notifier).state++;
+
     // Check if show should be moved back to watching
     await _checkAndUpdateShowStatus(showId);
   }
@@ -102,6 +114,8 @@ class TrackingActions extends AsyncNotifier<void> {
       // Only invalidate if status actually changed
       if (statusChanged == true) {
         ref.invalidate(trackedShowsProvider);
+        // ✅ ADDED: Status change affects analytics
+        ref.read(analyticsRevisionProvider.notifier).state++;
       }
     } catch (e) {
       // Silently fail - this is a background check
