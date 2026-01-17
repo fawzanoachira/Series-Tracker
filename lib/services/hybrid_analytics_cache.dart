@@ -88,8 +88,7 @@ class HybridAnalyticsCache {
     required DateTime watchedAt,
   }) async {
     log('📺 Episode marked watched - updating cache');
-    log(
-        '   Memory cache before: ${_memoryCache != null ? "EXISTS" : "NULL"}');
+    log('   Memory cache before: ${_memoryCache != null ? "EXISTS" : "NULL"}');
 
     // Update show analytics
     await _updateShowAnalytics(showId);
@@ -104,8 +103,7 @@ class HybridAnalyticsCache {
     // Invalidate memory cache
     _invalidateMemoryCache();
 
-    log(
-        '   Memory cache after invalidate: ${_memoryCache != null ? "EXISTS" : "NULL"}');
+    log('   Memory cache after invalidate: ${_memoryCache != null ? "EXISTS" : "NULL"}');
   }
 
   /// Called when an episode is marked unwatched
@@ -353,6 +351,23 @@ class HybridAnalyticsCache {
 
       // Get activity data
       final last30Days = await _load30DaysActivity();
+      final totalAvailableEpisodes = allShowAnalytics.fold<int>(
+        0,
+        (sum, a) => sum + a.totalEpisodes,
+      );
+
+      final totalWatchedEpisodes = allShowAnalytics.fold<int>(
+        0,
+        (sum, a) => sum + a.episodesWatched,
+      );
+
+      final totalRemainingEpisodes =
+          totalAvailableEpisodes - totalWatchedEpisodes;
+
+// Recalculate completion to ensure consistency
+      final actualCompletion = totalAvailableEpisodes > 0
+          ? (totalWatchedEpisodes / totalAvailableEpisodes) * 100
+          : 0.0;
 
       // Build complete analytics from cache
       return CompleteAnalytics(
@@ -370,17 +385,11 @@ class HybridAnalyticsCache {
           dropped: dropped,
         ),
         episodeProgress: EpisodeProgressAnalytics(
-          totalEpisodesWatched: aggregate.totalEpisodesWatched,
-          totalEpisodesRemaining: allShowAnalytics.fold<int>(
-            0,
-            (sum, a) => sum + (a.totalEpisodes - a.episodesWatched),
-          ),
-          totalAvailableEpisodes: allShowAnalytics.fold<int>(
-            0,
-            (sum, a) => sum + a.totalEpisodes,
-          ),
+          totalEpisodesWatched: totalWatchedEpisodes, // ← Consistent
+          totalEpisodesRemaining: totalRemainingEpisodes, // ← Consistent
+          totalAvailableEpisodes: totalAvailableEpisodes, // ← Consistent
           totalSeasonCount: aggregate.totalSeasons,
-          completionPercentage: aggregate.overallCompletion,
+          completionPercentage: actualCompletion, // ← Consistent
         ),
         timeAnalytics: TimeAnalytics(
           totalHoursWatched: aggregate.totalHours,
