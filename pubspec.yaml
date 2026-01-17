@@ -41,6 +41,7 @@ dependencies:
   path: ^1.9.0
   flutter_riverpod: ^2.5.1
   google_fonts: ^7.0.2
+  flutter_native_splash: ^2.4.4
 
 dev_dependencies:
 
@@ -92,3 +93,15 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+flutter_native_splash:
+  color: "#000000"   # background color
+  image: assets/images/lahv_logo.png
+
+  android: true
+  ios: true
+  web: false
+
+  android_12:
+    color: "#000000"
+    image: assets/images/lahv_logo.png
