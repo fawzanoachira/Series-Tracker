@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:series_tracker/models/tvmaze/search.dart';
-import 'package:series_tracker/screens/search_screen/search_screen_layout.dart';
-import 'package:series_tracker/screens/search_screen/widgets/show_grid_tile.dart';
-import 'package:series_tracker/screens/search_screen/widgets/show_list_tile.dart';
+import 'package:lahv/models/tvmaze/search.dart';
+import 'package:lahv/screens/search_screen/search_screen_layout.dart';
+import 'package:lahv/screens/search_screen/widgets/show_grid_tile.dart';
+import 'package:lahv/screens/search_screen/widgets/show_list_tile.dart';
 
 class ShowResultsView extends StatelessWidget {
   final List<Search> results;

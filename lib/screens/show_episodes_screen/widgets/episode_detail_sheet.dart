@@ -3,16 +3,16 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:series_tracker/models/tvmaze/episode.dart';
-import 'package:series_tracker/models/tvmaze/show_image.dart';
-import 'package:series_tracker/navigation/fade_scale_route.dart';
-import 'package:series_tracker/screens/show_episodes_screen/widgets/episode_image_viewer.dart';
-import 'package:series_tracker/utils/image_preoloader.dart';
-import 'package:series_tracker/widgets/cached_image.dart';
+import 'package:lahv/models/tvmaze/episode.dart';
+import 'package:lahv/models/tvmaze/show_image.dart';
+import 'package:lahv/navigation/fade_scale_route.dart';
+import 'package:lahv/screens/show_episodes_screen/widgets/episode_image_viewer.dart';
+import 'package:lahv/utils/image_preoloader.dart';
+import 'package:lahv/widgets/cached_image.dart';
 
-import 'package:series_tracker/providers/is_episode_watched_provider.dart';
-import 'package:series_tracker/providers/tracking_actions_provider.dart';
-import 'package:series_tracker/providers/has_episode_aired_provider.dart';
+import 'package:lahv/providers/is_episode_watched_provider.dart';
+import 'package:lahv/providers/tracking_actions_provider.dart';
+import 'package:lahv/providers/has_episode_aired_provider.dart';
 
 class EpisodeDetailSheet extends ConsumerStatefulWidget {
   final int showId;

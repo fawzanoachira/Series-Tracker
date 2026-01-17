@@ -1,4 +1,4 @@
-package com.example.laebun_va_lahv
+package com.lahv.app
 
 import io.flutter.embedding.android.FlutterActivity
 

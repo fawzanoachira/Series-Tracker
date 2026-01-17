@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/models/tvmaze/show.dart';
-import 'package:series_tracker/providers/episode_tracking_revision_provider.dart';
-import 'package:series_tracker/providers/is_show_tracked_provider.dart';
+import 'package:lahv/models/tvmaze/show.dart';
+import 'package:lahv/providers/episode_tracking_revision_provider.dart';
+import 'package:lahv/providers/is_show_tracked_provider.dart';
 import 'core_providers.dart';
 import 'tracked_shows_provider.dart';
 

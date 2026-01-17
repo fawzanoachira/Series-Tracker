@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:series_tracker/utils/my_cache_manager.dart';
+import 'package:lahv/utils/my_cache_manager.dart';
 
 class CachedImage extends StatelessWidget {
   final String url;

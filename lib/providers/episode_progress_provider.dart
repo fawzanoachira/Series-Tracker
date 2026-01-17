@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/models/tracking/tracked_episode.dart';
+import 'package:lahv/models/tracking/tracked_episode.dart';
 import 'core_providers.dart';
 import 'episode_tracking_revision_provider.dart';
 

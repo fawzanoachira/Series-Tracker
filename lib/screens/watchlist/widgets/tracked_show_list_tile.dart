@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/api/tracker.dart' as tracker;
-import 'package:series_tracker/models/tracking/tracked_episode.dart';
-import 'package:series_tracker/models/tracking/tracked_show.dart';
-import 'package:series_tracker/models/tvmaze/episode.dart';
-import 'package:series_tracker/models/tvmaze/image_tvmaze.dart';
-import 'package:series_tracker/models/tvmaze/show.dart';
-import 'package:series_tracker/providers/episode_progress_provider.dart';
-import 'package:series_tracker/providers/next_episode_provider.dart';
-import 'package:series_tracker/providers/show_progress_provider.dart';
-import 'package:series_tracker/providers/tracking_actions_provider.dart';
-import 'package:series_tracker/screens/show_detail_screen/show_detail_screen.dart';
-import 'package:series_tracker/screens/show_episodes_screen/widgets/episode_carousel_sheet.dart';
-import 'package:series_tracker/widgets/animations/drawn_checkmark.dart';
+import 'package:lahv/api/tracker.dart' as tracker;
+import 'package:lahv/models/tracking/tracked_episode.dart';
+import 'package:lahv/models/tracking/tracked_show.dart';
+import 'package:lahv/models/tvmaze/episode.dart';
+import 'package:lahv/models/tvmaze/image_tvmaze.dart';
+import 'package:lahv/models/tvmaze/show.dart';
+import 'package:lahv/providers/episode_progress_provider.dart';
+import 'package:lahv/providers/next_episode_provider.dart';
+import 'package:lahv/providers/show_progress_provider.dart';
+import 'package:lahv/providers/tracking_actions_provider.dart';
+import 'package:lahv/screens/show_detail_screen/show_detail_screen.dart';
+import 'package:lahv/screens/show_episodes_screen/widgets/episode_carousel_sheet.dart';
+import 'package:lahv/widgets/animations/drawn_checkmark.dart';
 
 /// --------------------------------------------
 /// Optimistic UI state for swipe → watched

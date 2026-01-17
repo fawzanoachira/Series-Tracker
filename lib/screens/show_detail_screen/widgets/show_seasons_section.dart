@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:series_tracker/api/tracker.dart';
-import 'package:series_tracker/models/tvmaze/season.dart';
-import 'package:series_tracker/screens/show_detail_screen/widgets/show_season_row.dart';
+import 'package:lahv/api/tracker.dart';
+import 'package:lahv/models/tvmaze/season.dart';
+import 'package:lahv/screens/show_detail_screen/widgets/show_season_row.dart';
 
 class ShowSeasonsSection extends StatelessWidget {
   final int showId;

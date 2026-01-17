@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/api/tracker.dart';
-import 'package:series_tracker/models/tvmaze/episode.dart';
-import 'package:series_tracker/models/tvmaze/season.dart';
-import 'package:series_tracker/providers/is_episode_watched_provider.dart';
-import 'package:series_tracker/providers/tracking_actions_provider.dart';
-import 'package:series_tracker/providers/has_episode_aired_provider.dart';
-import 'package:series_tracker/screens/show_episodes_screen/widgets/episode_carousel_sheet.dart';
+import 'package:lahv/api/tracker.dart';
+import 'package:lahv/models/tvmaze/episode.dart';
+import 'package:lahv/models/tvmaze/season.dart';
+import 'package:lahv/providers/is_episode_watched_provider.dart';
+import 'package:lahv/providers/tracking_actions_provider.dart';
+import 'package:lahv/providers/has_episode_aired_provider.dart';
+import 'package:lahv/screens/show_episodes_screen/widgets/episode_carousel_sheet.dart';
 
 // Provider for fetching episodes (cached per season)
 final seasonEpisodesProvider = FutureProvider.family<List<Episode>, int>(

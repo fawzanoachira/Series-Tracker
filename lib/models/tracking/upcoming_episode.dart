@@ -1,4 +1,4 @@
-import 'package:series_tracker/models/tvmaze/episode.dart';
+import 'package:lahv/models/tvmaze/episode.dart';
 
 class UpcomingEpisode {
   final int showId;

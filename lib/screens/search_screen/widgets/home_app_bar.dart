@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:series_tracker/screens/search_screen/search_screen_layout.dart';
+import 'package:lahv/screens/search_screen/search_screen_layout.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/models/tvmaze/show.dart';
-import 'package:series_tracker/providers/show_detail_provider.dart';
+import 'package:lahv/models/tvmaze/show.dart';
+import 'package:lahv/providers/show_detail_provider.dart';
 import 'show_detail_view.dart';
 
 class ShowDetailScreen extends ConsumerWidget {

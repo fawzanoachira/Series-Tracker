@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/api/tracker.dart' as tracker;
-import 'package:series_tracker/models/tvmaze/episode.dart';
+import 'package:lahv/api/tracker.dart' as tracker;
+import 'package:lahv/models/tvmaze/episode.dart';
 import 'episode_progress_provider.dart';
 
 class NextEpisode {

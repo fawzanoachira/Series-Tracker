@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:series_tracker/screens/search_screen/search_screen.dart';
-import 'package:series_tracker/navigation/bottom_app_bar.dart';
-import 'package:series_tracker/screens/watchlist/watchlist_screen.dart';
-import 'package:series_tracker/screens/my_shows/my_shows_screen.dart';
+import 'package:lahv/screens/search_screen/search_screen.dart';
+import 'package:lahv/navigation/bottom_app_bar.dart';
+import 'package:lahv/screens/watchlist/watchlist_screen.dart';
+import 'package:lahv/screens/my_shows/my_shows_screen.dart';
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});

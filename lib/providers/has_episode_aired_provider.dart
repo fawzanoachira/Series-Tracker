@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/models/tvmaze/episode.dart';
+import 'package:lahv/models/tvmaze/episode.dart';
 
 /// Provider to check if an episode has aired
 /// Considers both airdate and airtime if available

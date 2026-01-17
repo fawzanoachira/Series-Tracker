@@ -1,4 +1,4 @@
-import 'package:series_tracker/models/tvmaze/country.dart';
+import 'package:lahv/models/tvmaze/country.dart';
 
 class Network {
   int? id;

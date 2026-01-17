@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:series_tracker/models/tracking/tracked_show.dart';
-import 'package:series_tracker/providers/tracked_shows_provider.dart';
-import 'package:series_tracker/providers/upcoming_episodes_provider.dart';
-import 'package:series_tracker/screens/show_detail_screen/show_detail_screen.dart';
-import 'package:series_tracker/models/tvmaze/show.dart';
-import 'package:series_tracker/models/tvmaze/image_tvmaze.dart';
-import 'package:series_tracker/widgets/upcoming_episode_card.dart';
+import 'package:lahv/models/tracking/tracked_show.dart';
+import 'package:lahv/providers/tracked_shows_provider.dart';
+import 'package:lahv/providers/upcoming_episodes_provider.dart';
+import 'package:lahv/screens/show_detail_screen/show_detail_screen.dart';
+import 'package:lahv/models/tvmaze/show.dart';
+import 'package:lahv/models/tvmaze/image_tvmaze.dart';
+import 'package:lahv/widgets/upcoming_episode_card.dart';
 
 class MyShowsScreen extends ConsumerStatefulWidget {
   const MyShowsScreen({super.key});

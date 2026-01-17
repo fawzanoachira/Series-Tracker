@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:series_tracker/providers/tracked_shows_provider.dart';
-import 'package:series_tracker/models/tracking/tracked_show.dart';
+import 'package:lahv/providers/tracked_shows_provider.dart';
+import 'package:lahv/models/tracking/tracked_show.dart';
 import 'widgets/tracked_show_grid_tile.dart';
 import 'widgets/tracked_show_list_tile.dart';
 

@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/api/tracker.dart' as tracker;
-import 'package:series_tracker/models/tracking/upcoming_episode.dart';
-import 'package:series_tracker/models/tvmaze/episode.dart';
-import 'package:series_tracker/providers/tracked_shows_provider.dart';
+import 'package:lahv/api/tracker.dart' as tracker;
+import 'package:lahv/models/tracking/upcoming_episode.dart';
+import 'package:lahv/models/tvmaze/episode.dart';
+import 'package:lahv/providers/tracked_shows_provider.dart';
 
 /// Cache for episodes by show ID to avoid repeated API calls
 final _episodesCache = <int, List<Episode>>{};

@@ -1,11 +1,11 @@
-import 'package:series_tracker/api/tracker.dart' as tracker;
-import 'package:series_tracker/data/local/app_database.dart';
-import 'package:series_tracker/data/local/episode_dao.dart';
-import 'package:series_tracker/data/local/show_dao.dart';
-import 'package:series_tracker/models/tracking/tracked_episode.dart';
-import 'package:series_tracker/models/tracking/tracked_show.dart';
-import 'package:series_tracker/models/tvmaze/episode.dart';
-import 'package:series_tracker/models/tvmaze/show.dart';
+import 'package:lahv/api/tracker.dart' as tracker;
+import 'package:lahv/data/local/app_database.dart';
+import 'package:lahv/data/local/episode_dao.dart';
+import 'package:lahv/data/local/show_dao.dart';
+import 'package:lahv/models/tracking/tracked_episode.dart';
+import 'package:lahv/models/tracking/tracked_show.dart';
+import 'package:lahv/models/tvmaze/episode.dart';
+import 'package:lahv/models/tvmaze/show.dart';
 
 class TrackingRepository {
   final AppDatabase _database;

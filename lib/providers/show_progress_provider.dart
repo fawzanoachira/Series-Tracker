@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/api/tracker.dart' as tracker;
-import 'package:series_tracker/models/tvmaze/episode.dart';
-import 'package:series_tracker/providers/core_providers.dart';
-import 'package:series_tracker/providers/episode_tracking_revision_provider.dart';
+import 'package:lahv/api/tracker.dart' as tracker;
+import 'package:lahv/models/tvmaze/episode.dart';
+import 'package:lahv/providers/core_providers.dart';
+import 'package:lahv/providers/episode_tracking_revision_provider.dart';
 
 /// Helper to check if episode has aired
 bool _hasEpisodeAired(String? airdate, [String? airtime]) {

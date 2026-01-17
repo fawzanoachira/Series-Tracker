@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/models/tracking/upcoming_episode.dart';
-import 'package:series_tracker/models/tvmaze/image_tvmaze.dart';
-import 'package:series_tracker/models/tvmaze/show.dart';
-import 'package:series_tracker/screens/show_detail_screen/show_detail_screen.dart';
+import 'package:lahv/models/tracking/upcoming_episode.dart';
+import 'package:lahv/models/tvmaze/image_tvmaze.dart';
+import 'package:lahv/models/tvmaze/show.dart';
+import 'package:lahv/screens/show_detail_screen/show_detail_screen.dart';
 
 class UpcomingEpisodeCard extends ConsumerWidget {
   final UpcomingEpisode upcomingEpisode;

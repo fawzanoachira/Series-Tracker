@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:series_tracker/models/tvmaze/episode.dart';
-import 'package:series_tracker/models/tvmaze/show_image.dart';
-import 'package:series_tracker/screens/show_episodes_screen/widgets/episode_detail_sheet.dart';
+import 'package:lahv/models/tvmaze/episode.dart';
+import 'package:lahv/models/tvmaze/show_image.dart';
+import 'package:lahv/screens/show_episodes_screen/widgets/episode_detail_sheet.dart';
 
 class EpisodeCarouselSheet extends StatefulWidget {
   final int showId;
