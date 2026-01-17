@@ -18,23 +18,46 @@ class BottomAppBarData extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _item(context, 0, _icon(0)),
-          _item(context, 1, _icon(1)),
-          _item(context, 2, _icon(2)),
-          _item(context, 3, _icon(3)),
+          _item(context, 0, _icon(0), 'Watchlist'),
+          _item(context, 1, _icon(1), 'My Shows'),
+          _item(context, 2, _icon(2), 'Explore'),
+          _item(context, 3, _icon(3), 'Analytics'),
         ],
       ),
     );
   }
 
-  Widget _item(BuildContext context, int index, IconData icon) {
-    return IconButton(
-      onPressed: () => onTap(index),
-      icon: Icon(
-        icon,
-        color: currentIndex == index
-            ? Theme.of(context).colorScheme.primary
-            : null,
+  Widget _item(BuildContext context, int index, IconData icon, String label) {
+    final isActive = currentIndex == index;
+    final theme = Theme.of(context);
+
+    return Expanded(
+      child: InkWell(
+        onTap: () => onTap(index),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: isActive
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: isActive
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -49,7 +72,7 @@ class BottomAppBarData extends StatelessWidget {
       case 2:
         return isActive ? Icons.explore : Icons.explore_outlined;
       case 3:
-        return isActive ? Icons.insights : Icons.insights_outlined;
+        return isActive ? Icons.analytics : Icons.analytics_outlined;
       default:
         return Icons.circle;
     }

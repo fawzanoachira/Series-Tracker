@@ -14,6 +14,7 @@ import 'package:lahv/providers/tracking_actions_provider.dart';
 import 'package:lahv/screens/show_detail_screen/show_detail_screen.dart';
 import 'package:lahv/screens/show_episodes_screen/widgets/episode_carousel_sheet.dart';
 import 'package:lahv/widgets/animations/drawn_checkmark.dart';
+import 'package:lahv/widgets/cached_image.dart';
 
 /// --------------------------------------------
 /// Optimistic UI state for swipe → watched
@@ -180,27 +181,22 @@ class TrackedShowListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final watched = ref.watch(
-      episodeProgressProvider(show.showId).select((a) => a.valueOrNull),
-    );
-
-    final next = ref.watch(
-      nextEpisodeProvider(show.showId).select((a) => a.valueOrNull),
-    );
-
-    final progress = ref.watch(
-      showProgressProvider(show.showId).select((a) => a.valueOrNull),
-    );
+    final watchedAsync = ref.watch(episodeProgressProvider(show.showId));
+    final nextAsync = ref.watch(nextEpisodeProvider(show.showId));
+    final progressAsync = ref.watch(showProgressProvider(show.showId));
 
     final isMarkingWatched = ref.watch(_markingWatchedProvider(show.showId));
 
-    /// Reset optimistic UI **only when new data arrives**
-    ref.listen<ShowProgress?>(
-      showProgressProvider(show.showId).select((a) => a.valueOrNull),
+    /// Reset optimistic UI when new data arrives
+    ref.listen<AsyncValue<ShowProgress>>(
+      showProgressProvider(show.showId),
       (prev, curr) {
-        if (prev != null &&
-            curr != null &&
-            curr.watchedCount != prev.watchedCount) {
+        final prevData = prev?.valueOrNull;
+        final currData = curr.valueOrNull;
+
+        if (prevData != null &&
+            currData != null &&
+            currData.watchedCount != prevData.watchedCount) {
           ref.read(_markingWatchedProvider(show.showId).notifier).state = false;
         }
       },
@@ -211,20 +207,79 @@ class TrackedShowListTile extends ConsumerWidget {
       return _markedWatchedTile();
     }
 
+    // Handle loading and error states
+    return watchedAsync.when(
+      data: (watched) {
+        return nextAsync.when(
+          data: (next) {
+            return progressAsync.when(
+              data: (progress) {
+                return _buildDismissible(
+                  context,
+                  ref,
+                  watched,
+                  next,
+                  progress,
+                );
+              },
+              loading: () => _buildLoadingTile(context),
+              error: (_, __) => _buildTileContent(
+                context,
+                watched,
+                next,
+                null,
+              ),
+            );
+          },
+          loading: () => _buildLoadingTile(context),
+          error: (_, __) => progressAsync.when(
+            data: (progress) => _buildTileContent(
+              context,
+              watched,
+              null,
+              progress,
+            ),
+            loading: () => _buildLoadingTile(context),
+            error: (_, __) => _buildTileContent(
+              context,
+              watched,
+              null,
+              null,
+            ),
+          ),
+        );
+      },
+      loading: () => _buildLoadingTile(context),
+      error: (_, __) => _buildTileContent(
+        context,
+        null,
+        null,
+        null,
+      ),
+    );
+  }
+
+  Widget _buildDismissible(
+    BuildContext context,
+    WidgetRef ref,
+    List<TrackedEpisode>? watched,
+    NextEpisode? next,
+    ShowProgress? progress,
+  ) {
     return Dismissible(
-      key: ValueKey('show-${show.showId}'), // Simplified key without nullables
+      key: ValueKey('show-${show.showId}'),
       direction:
           next != null ? DismissDirection.endToStart : DismissDirection.none,
       confirmDismiss: (_) async {
         if (next == null) return false;
 
-        /// 1️⃣ Immediate UI feedback
+        /// Immediate UI feedback
         ref.read(_markingWatchedProvider(show.showId).notifier).state = true;
 
-        /// 🔔 Haptic feedback
+        /// Haptic feedback
         HapticFeedback.mediumImpact();
 
-        /// 2️⃣ Trigger update
+        /// Trigger update
         await _markNextEpisodeWatched(
           ref,
           show.showId,
@@ -247,6 +302,46 @@ class TrackedShowListTile extends ConsumerWidget {
   // ------------------------------------------------
   // Tile Content
   // ------------------------------------------------
+
+  Widget _buildLoadingTile(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: SizedBox(
+              width: 90,
+              height: 135,
+              child: show.posterUrl != null
+                  ? CachedImage(url: show.posterUrl!)
+                  : _placeholderPoster(),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _title(context),
+                const SizedBox(height: 6),
+                const Text(
+                  'Loading...',
+                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildTileContent(
     BuildContext context,
@@ -271,11 +366,9 @@ class TrackedShowListTile extends ConsumerWidget {
               child: SizedBox(
                 width: 90,
                 height: 135,
-                child: Image.network(
-                  show.posterUrl ?? '',
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _placeholderPoster(),
-                ),
+                child: show.posterUrl != null
+                    ? CachedImage(url: show.posterUrl!)
+                    : _placeholderPoster(),
               ),
             ),
           ),
@@ -373,7 +466,6 @@ class TrackedShowListTile extends ConsumerWidget {
               '${progress.watchedCount}/${progress.totalCount}',
               style: const TextStyle(fontSize: 11, color: Colors.white),
             ),
-            // Show remaining count for both in-progress and completed shows
             Text(
               remaining > 0 ? '$remaining left' : 'Completed',
               style: TextStyle(
@@ -430,7 +522,6 @@ class TrackedShowListTile extends ConsumerWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Keeps exact tile size
           const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -439,8 +530,6 @@ class TrackedShowListTile extends ConsumerWidget {
               Expanded(child: SizedBox()),
             ],
           ),
-
-          // ✔ Tick pop
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.7, end: 1.0),
             duration: const Duration(milliseconds: 220),

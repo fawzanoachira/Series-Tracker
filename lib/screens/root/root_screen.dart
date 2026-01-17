@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lahv/screens/analytics/analytics_screen.dart';
 import 'package:lahv/screens/search_screen/search_screen.dart';
 import 'package:lahv/navigation/bottom_app_bar.dart';
 import 'package:lahv/screens/watchlist/watchlist_screen.dart';
@@ -18,7 +19,7 @@ class _RootScreenState extends State<RootScreen> {
     const WatchlistScreen(),
     const MyShowsScreen(), // All tracked shows (watching, completed, dropped)
     const SearchScreen(), // Discovery
-    const _PlaceholderScreen(title: 'Analytics'),
+    const AnalyticsScreen(),
   ];
 
   void _onTabSelected(int index) {
@@ -32,21 +33,6 @@ class _RootScreenState extends State<RootScreen> {
       bottomNavigationBar: BottomAppBarData(
         currentIndex: _currentIndex,
         onTap: _onTabSelected,
-      ),
-    );
-  }
-}
-
-class _PlaceholderScreen extends StatelessWidget {
-  final String title;
-  const _PlaceholderScreen({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.headlineMedium,
       ),
     );
   }
