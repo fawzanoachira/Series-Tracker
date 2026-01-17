@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/api/tracker.dart' as tracker;
-import 'package:series_tracker/models/tvmaze/season.dart';
-import 'package:series_tracker/providers/core_providers.dart';
-import 'package:series_tracker/providers/episode_tracking_revision_provider.dart';
-import 'package:series_tracker/providers/tracked_shows_provider.dart';
-import 'package:series_tracker/providers/episode_progress_provider.dart';
-import 'package:series_tracker/screens/show_episodes_screen/show_episodes_view.dart';
+import 'package:lahv/api/tracker.dart' as tracker;
+import 'package:lahv/models/tvmaze/season.dart';
+import 'package:lahv/providers/core_providers.dart';
+import 'package:lahv/providers/episode_tracking_revision_provider.dart';
+import 'package:lahv/providers/tracked_shows_provider.dart';
+import 'package:lahv/providers/episode_progress_provider.dart';
+import 'package:lahv/screens/show_episodes_screen/show_episodes_view.dart';
 
 class ShowSeasonRow extends ConsumerWidget {
   final int showId;

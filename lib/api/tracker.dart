@@ -1,12 +1,12 @@
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
-import 'package:series_tracker/api/api.dart';
-import 'package:series_tracker/models/tvmaze/episode.dart';
-import 'package:series_tracker/models/tvmaze/search.dart';
-import 'package:series_tracker/models/tvmaze/season.dart';
-import 'package:series_tracker/models/tvmaze/show.dart';
-import 'package:series_tracker/models/tvmaze/show_image.dart';
+import 'package:lahv/api/api.dart';
+import 'package:lahv/models/tvmaze/episode.dart';
+import 'package:lahv/models/tvmaze/search.dart';
+import 'package:lahv/models/tvmaze/season.dart';
+import 'package:lahv/models/tvmaze/show.dart';
+import 'package:lahv/models/tvmaze/show_image.dart';
 
 final dio = Dio(baseOptions);
 

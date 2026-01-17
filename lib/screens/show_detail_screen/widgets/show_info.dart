@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:series_tracker/models/tvmaze/show.dart';
+import 'package:lahv/models/tvmaze/show.dart';
 
 class ShowInfo extends StatelessWidget {
   final Show show;

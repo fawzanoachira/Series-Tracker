@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:series_tracker/api/tracker.dart';
-import 'package:series_tracker/models/tvmaze/search.dart';
-import 'package:series_tracker/screens/search_screen/search_screen_layout.dart';
-import 'package:series_tracker/screens/search_screen/widgets/home_app_bar.dart';
-import 'package:series_tracker/screens/search_screen/widgets/show_results_view.dart';
+import 'package:lahv/api/tracker.dart';
+import 'package:lahv/models/tvmaze/search.dart';
+import 'package:lahv/screens/search_screen/search_screen_layout.dart';
+import 'package:lahv/screens/search_screen/widgets/home_app_bar.dart';
+import 'package:lahv/screens/search_screen/widgets/show_results_view.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});

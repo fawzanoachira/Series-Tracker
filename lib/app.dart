@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:series_tracker/config/color/color.dart';
-import 'package:series_tracker/screens/root/root_screen.dart';
+import 'package:lahv/config/color/color.dart';
+import 'package:lahv/screens/root/root_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -8,7 +8,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Laebun va Lahv',
+      title: 'Lahv',
       theme: ThemeData.dark(useMaterial3: true).copyWith(
           scaffoldBackgroundColor: scaffoldColor,
           colorScheme: const ColorScheme.dark(
@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
             color: appBarColor,
           )),
       debugShowCheckedModeBanner: false,
-      home: const RootScreen(),
+      home: const SafeArea(top: false, child: RootScreen()),
     );
   }
 }

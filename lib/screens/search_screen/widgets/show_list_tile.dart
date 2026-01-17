@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:series_tracker/models/tvmaze/search.dart';
-import 'package:series_tracker/screens/show_detail_screen/show_detail_screen.dart';
+import 'package:lahv/models/tvmaze/search.dart';
+import 'package:lahv/screens/show_detail_screen/show_detail_screen.dart';
 
 class ShowListTile extends StatelessWidget {
   final Search search;

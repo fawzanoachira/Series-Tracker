@@ -1,9 +1,9 @@
-import 'package:series_tracker/models/tvmaze/externals.dart';
-import 'package:series_tracker/models/tvmaze/image_tvmaze.dart';
-import 'package:series_tracker/models/tvmaze/links.dart';
-import 'package:series_tracker/models/tvmaze/network.dart';
-import 'package:series_tracker/models/tvmaze/rating.dart';
-import 'package:series_tracker/models/tvmaze/schedule.dart';
+import 'package:lahv/models/tvmaze/externals.dart';
+import 'package:lahv/models/tvmaze/image_tvmaze.dart';
+import 'package:lahv/models/tvmaze/links.dart';
+import 'package:lahv/models/tvmaze/network.dart';
+import 'package:lahv/models/tvmaze/rating.dart';
+import 'package:lahv/models/tvmaze/schedule.dart';
 
 class SingleSearch {
   int? id;

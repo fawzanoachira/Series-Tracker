@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/data/local/app_database.dart';
-import 'package:series_tracker/data/local/show_dao.dart';
-import 'package:series_tracker/data/local/episode_dao.dart';
-import 'package:series_tracker/repository/tracking_repository.dart';
+import 'package:lahv/data/local/app_database.dart';
+import 'package:lahv/data/local/show_dao.dart';
+import 'package:lahv/data/local/episode_dao.dart';
+import 'package:lahv/repository/tracking_repository.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
   return AppDatabase();

@@ -1,4 +1,4 @@
-import 'package:series_tracker/models/tvmaze/show_image.dart';
+import 'package:lahv/models/tvmaze/show_image.dart';
 
 ShowImage? pickBestShowImage(List<ShowImage> images) {
   if (images.isEmpty) return null;

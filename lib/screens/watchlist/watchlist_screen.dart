@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/providers/tracked_shows_provider.dart';
-import 'package:series_tracker/models/tracking/tracked_show.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lahv/providers/tracked_shows_provider.dart';
+import 'package:lahv/models/tracking/tracked_show.dart';
 import 'widgets/tracked_show_grid_tile.dart';
 import 'widgets/tracked_show_list_tile.dart';
 
@@ -23,7 +24,15 @@ class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Watchlist'),
+        title: Text(
+          "Lahv",
+          key: const ValueKey('title'),
+          style: GoogleFonts.poppins(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            // You can customize further: color, etc.
+          ),
+        ),
         actions: [
           IconButton(
             icon: Icon(

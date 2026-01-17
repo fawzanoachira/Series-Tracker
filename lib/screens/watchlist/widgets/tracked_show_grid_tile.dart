@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/models/tracking/tracked_show.dart';
-import 'package:series_tracker/models/tvmaze/image_tvmaze.dart';
-import 'package:series_tracker/models/tvmaze/show.dart';
-import 'package:series_tracker/providers/next_episode_provider.dart';
-import 'package:series_tracker/providers/show_progress_provider.dart';
-import 'package:series_tracker/screens/show_detail_screen/show_detail_screen.dart';
+import 'package:lahv/models/tracking/tracked_show.dart';
+import 'package:lahv/models/tvmaze/image_tvmaze.dart';
+import 'package:lahv/models/tvmaze/show.dart';
+import 'package:lahv/providers/next_episode_provider.dart';
+import 'package:lahv/providers/show_progress_provider.dart';
+import 'package:lahv/screens/show_detail_screen/show_detail_screen.dart';
 
 class TrackedShowGridTile extends ConsumerWidget {
   final TrackedShow show;

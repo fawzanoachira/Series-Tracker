@@ -1,5 +1,5 @@
-import 'package:series_tracker/data/local/app_database.dart';
-import 'package:series_tracker/models/tracking/tracked_show.dart';
+import 'package:lahv/data/local/app_database.dart';
+import 'package:lahv/models/tracking/tracked_show.dart';
 import 'package:sqflite/sqflite.dart';
 
 class ShowDao {

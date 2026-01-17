@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:series_tracker/widgets/cached_image.dart';
+import 'package:lahv/widgets/cached_image.dart';
 
 class EpisodeImageViewer extends StatelessWidget {
   final String imageUrl;

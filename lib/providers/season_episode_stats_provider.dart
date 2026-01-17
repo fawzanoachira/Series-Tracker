@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/models/tracking/season_episode_stats.dart';
+import 'package:lahv/models/tracking/season_episode_stats.dart';
 import 'episode_progress_provider.dart';
 
 typedef SeasonKey = ({int showId, int season, int totalEpisodes});

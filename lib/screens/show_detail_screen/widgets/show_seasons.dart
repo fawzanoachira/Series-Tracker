@@ -1,10 +1,9 @@
 // Currently Not Using...
 
-
 import 'package:flutter/material.dart';
-import 'package:series_tracker/api/tracker.dart';
-import 'package:series_tracker/models/tvmaze/episode.dart';
-import 'package:series_tracker/models/tvmaze/season.dart';
+import 'package:lahv/api/tracker.dart';
+import 'package:lahv/models/tvmaze/episode.dart';
+import 'package:lahv/models/tvmaze/season.dart';
 
 class ShowSeasons extends StatefulWidget {
   final int showId;

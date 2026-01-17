@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:series_tracker/api/tracker.dart' as tracker;
-import 'package:series_tracker/models/tracking/tracked_episode.dart';
-import 'package:series_tracker/models/tracking/tracked_show.dart';
-import 'package:series_tracker/models/tvmaze/image_tvmaze.dart';
-import 'package:series_tracker/models/tvmaze/show.dart';
-import 'package:series_tracker/providers/episode_progress_provider.dart';
-import 'package:series_tracker/providers/next_episode_provider.dart';
-import 'package:series_tracker/providers/show_progress_provider.dart';
-import 'package:series_tracker/providers/tracking_actions_provider.dart';
-import 'package:series_tracker/screens/show_detail_screen/show_detail_screen.dart';
-import 'package:series_tracker/screens/show_episodes_screen/widgets/episode_carousel_sheet.dart';
-import 'package:series_tracker/widgets/animations/drawn_checkmark.dart';
+import 'package:lahv/api/tracker.dart' as tracker;
+import 'package:lahv/models/tracking/tracked_episode.dart';
+import 'package:lahv/models/tracking/tracked_show.dart';
+import 'package:lahv/models/tvmaze/episode.dart';
+import 'package:lahv/models/tvmaze/image_tvmaze.dart';
+import 'package:lahv/models/tvmaze/show.dart';
+import 'package:lahv/providers/episode_progress_provider.dart';
+import 'package:lahv/providers/next_episode_provider.dart';
+import 'package:lahv/providers/show_progress_provider.dart';
+import 'package:lahv/providers/tracking_actions_provider.dart';
+import 'package:lahv/screens/show_detail_screen/show_detail_screen.dart';
+import 'package:lahv/screens/show_episodes_screen/widgets/episode_carousel_sheet.dart';
+import 'package:lahv/widgets/animations/drawn_checkmark.dart';
 
 /// --------------------------------------------
 /// Optimistic UI state for swipe → watched
@@ -50,8 +51,44 @@ class TrackedShowListTile extends ConsumerWidget {
   }
 
   // ------------------------------------------------
-  // Episode Sheet
+  // Episode Sheet - Shows ALL aired episodes from ALL seasons
   // ------------------------------------------------
+
+  /// Helper to check if episode has aired
+  bool _hasEpisodeAired(String? airdate, [String? airtime]) {
+    if (airdate == null || airdate.isEmpty) {
+      return false;
+    }
+
+    try {
+      DateTime episodeDateTime;
+
+      if (airtime != null && airtime.isNotEmpty) {
+        final dateParts = airdate.split('-');
+        final timeParts = airtime.split(':');
+
+        if (dateParts.length != 3 || timeParts.isEmpty) {
+          return false;
+        }
+
+        episodeDateTime = DateTime(
+          int.parse(dateParts[0]),
+          int.parse(dateParts[1]),
+          int.parse(dateParts[2]),
+          int.parse(timeParts[0]),
+          timeParts.length > 1 ? int.parse(timeParts[1]) : 0,
+        );
+      } else {
+        episodeDateTime =
+            DateTime.parse(airdate).add(const Duration(hours: 23, minutes: 59));
+      }
+
+      final now = DateTime.now();
+      return episodeDateTime.isBefore(now);
+    } catch (e) {
+      return false;
+    }
+  }
 
   Future<void> _showNextEpisodeSheet(
     BuildContext context,
@@ -63,27 +100,61 @@ class TrackedShowListTile extends ConsumerWidget {
       final showImages = await tracker.fetchShowImages(showId);
       final seasons = await tracker.getSeasons(showId);
 
-      final targetSeason = seasons.firstWhere(
-        (s) => s.number == season,
-        orElse: () => seasons.first,
+      // Check if seasons list is not empty
+      if (seasons.isEmpty) return;
+
+      // Fetch ALL episodes from ALL seasons
+      final List<Episode> allEpisodes = [];
+      for (final seasonData in seasons) {
+        if (seasonData.id != null) {
+          final seasonEpisodes = await tracker.getEpisodes(seasonData.id!);
+          allEpisodes.addAll(seasonEpisodes);
+        }
+      }
+
+      if (allEpisodes.isEmpty) return;
+
+      // Sort episodes by season and number
+      allEpisodes.sort((a, b) {
+        final aSeason = a.season ?? 0;
+        final bSeason = b.season ?? 0;
+        if (aSeason != bSeason) return aSeason.compareTo(bSeason);
+        return (a.number ?? 0).compareTo(b.number ?? 0);
+      });
+
+      // Filter to only aired episodes
+      final airedEpisodes = allEpisodes.where((ep) {
+        return _hasEpisodeAired(ep.airdate, ep.airtime);
+      }).toList();
+
+      if (airedEpisodes.isEmpty) return;
+
+      // Find the index of the target episode (next episode to watch)
+      final episodeIndex = airedEpisodes.indexWhere(
+        (e) => e.season == season && e.number == episode,
       );
 
-      final episodes = await tracker.getEpisodes(targetSeason.id!);
-      final episodeIndex = episodes.indexWhere((e) => e.number == episode);
+      // If target episode not found, start from first aired episode
+      final initialIndex = episodeIndex >= 0 ? episodeIndex : 0;
 
-      if (episodeIndex == -1 || !context.mounted) return;
+      if (!context.mounted) return;
 
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
-        builder: (_) => EpisodeCarouselSheet(
-          showId: showId,
-          episodes: episodes,
-          initialIndex: episodeIndex,
-          showImages: showImages,
+        backgroundColor: Colors.transparent,
+        builder: (_) => SafeArea(
+          child: EpisodeCarouselSheet(
+            showId: showId,
+            episodes: airedEpisodes,
+            initialIndex: initialIndex,
+            showImages: showImages,
+          ),
         ),
       );
-    } catch (_) {}
+    } catch (_) {
+      // Silently fail - this is a non-critical feature
+    }
   }
 
   // ------------------------------------------------
@@ -141,7 +212,7 @@ class TrackedShowListTile extends ConsumerWidget {
     }
 
     return Dismissible(
-      key: ValueKey('${show.showId}-${next?.season}-${next?.episode}'),
+      key: ValueKey('show-${show.showId}'), // Simplified key without nullables
       direction:
           next != null ? DismissDirection.endToStart : DismissDirection.none,
       confirmDismiss: (_) async {
@@ -215,7 +286,7 @@ class TrackedShowListTile extends ConsumerWidget {
               children: [
                 _title(context),
                 const SizedBox(height: 6),
-                _lastWatched(watched),
+                _nextEpisodeInfo(next, progress),
                 const SizedBox(height: 10),
                 _progressBar(progress, next),
                 const SizedBox(height: 10),
@@ -248,24 +319,35 @@ class TrackedShowListTile extends ConsumerWidget {
     );
   }
 
-  Widget _lastWatched(List<TrackedEpisode>? watched) {
-    if (watched == null || watched.isEmpty) {
+  Widget _nextEpisodeInfo(NextEpisode? next, ShowProgress? progress) {
+    // Case 1: No progress data yet (show just added)
+    if (progress == null) {
       return const Text(
-        'Not started yet',
-        style: TextStyle(fontSize: 13, color: Colors.white60),
+        'Loading...',
+        style: TextStyle(fontSize: 13, color: Colors.grey),
       );
     }
 
-    final last = watched.last;
+    // Case 2: Show completed (all episodes watched)
+    if (next == null) {
+      return const Text(
+        'All caught up!',
+        style: TextStyle(fontSize: 13, color: Colors.green),
+      );
+    }
+
+    // Case 3: Show next episode to watch
     return Text(
-      'S${last.season.toString().padLeft(2, '0')}'
-      'E${last.episode.toString().padLeft(2, '0')}',
-      style: const TextStyle(fontSize: 13, color: Colors.white60),
+      'Next: S${next.season.toString().padLeft(2, '0')}'
+      'E${next.episode.toString().padLeft(2, '0')}',
+      style: const TextStyle(fontSize: 13, color: Colors.white),
     );
   }
 
   Widget _progressBar(ShowProgress? progress, NextEpisode? next) {
     if (progress == null) return const SizedBox(height: 6);
+
+    final remaining = progress.totalCount - progress.watchedCount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,13 +371,16 @@ class TrackedShowListTile extends ConsumerWidget {
           children: [
             Text(
               '${progress.watchedCount}/${progress.totalCount}',
-              style: const TextStyle(fontSize: 11, color: Colors.white54),
+              style: const TextStyle(fontSize: 11, color: Colors.white),
             ),
-            if (next != null)
-              Text(
-                '${progress.totalCount - progress.watchedCount} left',
-                style: const TextStyle(fontSize: 11, color: Colors.white54),
+            // Show remaining count for both in-progress and completed shows
+            Text(
+              remaining > 0 ? '$remaining left' : 'Completed',
+              style: TextStyle(
+                fontSize: 11,
+                color: remaining > 0 ? Colors.white : Colors.green,
               ),
+            ),
           ],
         ),
       ],
@@ -319,7 +404,7 @@ class TrackedShowListTile extends ConsumerWidget {
           borderRadius: BorderRadius.circular(6),
         ),
         child: const Text(
-          'View Next',
+          'Episode Info',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w600,
