@@ -1,5 +1,5 @@
-name: series_tracker
-description: "A new Flutter project."
+name: lahv
+description: "An application for tracking and up to date with tv/web series."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -42,6 +42,7 @@ dependencies:
   flutter_riverpod: ^2.5.1
   google_fonts: ^7.0.2
   flutter_native_splash: ^2.4.4
+  names_launcher: ^0.0.2
 
 dev_dependencies:
 
@@ -105,3 +106,11 @@ flutter_native_splash:
   android_12:
     color: "#000000"
     image: assets/images/lahv_logo.png
+
+names_launcher:
+  name: "Lahv"
+  platforms:
+    android:
+      enable: true
+    ios:
+      enable: true

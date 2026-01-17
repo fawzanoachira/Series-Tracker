@@ -8,7 +8,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Laebun va Lahv',
+      title: 'Lahv',
       theme: ThemeData.dark(useMaterial3: true).copyWith(
           scaffoldBackgroundColor: scaffoldColor,
           colorScheme: const ColorScheme.dark(
