@@ -9,9 +9,12 @@ import 'package:lahv/providers/has_episode_aired_provider.dart';
 import 'package:lahv/screens/show_episodes_screen/widgets/episode_carousel_sheet.dart';
 
 // Provider for fetching episodes (cached per season)
+// FIXED: Now filters out special episodes (number = 0 or null)
 final seasonEpisodesProvider = FutureProvider.family<List<Episode>, int>(
   (ref, seasonId) async {
-    return await getEpisodes(seasonId);
+    final allEpisodes = await getEpisodes(seasonId);
+    // Filter out special episodes (episode number 0 or null)
+    return allEpisodes.where((ep) => (ep.number ?? 0) > 0).toList();
   },
 );
 
@@ -37,6 +40,12 @@ class EpisodesListScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('Error: $error')),
         data: (episodes) {
+          if (episodes.isEmpty) {
+            return const Center(
+              child: Text('No episodes found for this season'),
+            );
+          }
+
           return ListView.separated(
             itemCount: episodes.length,
             separatorBuilder: (_, __) => const Divider(),

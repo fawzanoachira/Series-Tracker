@@ -132,4 +132,20 @@ class EpisodeDao {
       whereArgs: [showId],
     );
   }
+
+  // Add this to your EpisodeDao class
+  Future<TrackedEpisode?> getEpisode({
+    required int showId,
+    required int season,
+    required int episode,
+  }) async {
+    final episodes = await getEpisodesForShow(showId);
+    try {
+      return episodes.firstWhere(
+        (e) => e.season == season && e.episode == episode,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
 }

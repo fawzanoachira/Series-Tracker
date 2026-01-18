@@ -13,6 +13,42 @@ class NextEpisode {
   });
 }
 
+/// Helper to check if episode has aired
+bool _hasEpisodeAired(String? airdate, [String? airtime]) {
+  if (airdate == null || airdate.isEmpty) {
+    return false;
+  }
+
+  try {
+    DateTime episodeDateTime;
+
+    if (airtime != null && airtime.isNotEmpty) {
+      final dateParts = airdate.split('-');
+      final timeParts = airtime.split(':');
+
+      if (dateParts.length != 3 || timeParts.isEmpty) {
+        return false;
+      }
+
+      episodeDateTime = DateTime(
+        int.parse(dateParts[0]),
+        int.parse(dateParts[1]),
+        int.parse(dateParts[2]),
+        int.parse(timeParts[0]),
+        timeParts.length > 1 ? int.parse(timeParts[1]) : 0,
+      );
+    } else {
+      episodeDateTime =
+          DateTime.parse(airdate).add(const Duration(hours: 23, minutes: 59));
+    }
+
+    final now = DateTime.now();
+    return episodeDateTime.isBefore(now);
+  } catch (e) {
+    return false;
+  }
+}
+
 final nextEpisodeProvider =
     FutureProvider.family<NextEpisode?, int>((ref, showId) async {
   final episodesAsync = ref.watch(episodeProgressProvider(showId));
@@ -34,22 +70,25 @@ final nextEpisodeProvider =
           }
         }
       } catch (e) {
-        // If API call fails, fall back to simple logic
-        if (watchedEpisodes.isEmpty) {
-          return const NextEpisode(season: 1, episode: 1);
-        }
-
-        watchedEpisodes.sort((a, b) {
-          if (a.season != b.season) return a.season.compareTo(b.season);
-          return a.episode.compareTo(b.episode);
-        });
-
-        final last = watchedEpisodes.last;
-        return NextEpisode(season: last.season, episode: last.episode + 1);
+        // If API call fails, return null
+        return null;
       }
 
-      // Sort all episodes
-      allEpisodes.sort((a, b) {
+      // ✅ FIX 1: Filter out special episodes (season 0 or episode 0)
+      // ✅ FIX 2: Filter to only AIRED episodes
+      final validEpisodes = allEpisodes.where((ep) {
+        final seasonNum = ep.season ?? 0;
+        final episodeNum = ep.number ?? 0;
+
+        // Must be a regular episode (not special)
+        if (seasonNum == 0 || episodeNum == 0) return false;
+
+        // Must have aired
+        return _hasEpisodeAired(ep.airdate, ep.airtime);
+      }).toList();
+
+      // Sort episodes
+      validEpisodes.sort((a, b) {
         final aSeason = a.season ?? 0;
         final bSeason = b.season ?? 0;
         final aNumber = a.number ?? 0;
@@ -59,13 +98,17 @@ final nextEpisodeProvider =
         return aNumber.compareTo(bNumber);
       });
 
-      // If no episodes watched, return the first episode
+      // If no valid episodes exist yet
+      if (validEpisodes.isEmpty) {
+        return null; // Show is not ready (no aired episodes)
+      }
+
+      // If no episodes watched, return the first valid episode
       if (watchedEpisodes.isEmpty) {
-        if (allEpisodes.isEmpty) return null;
-        final firstEpisode = allEpisodes.first;
+        final firstEpisode = validEpisodes.first;
         return NextEpisode(
-          season: firstEpisode.season ?? 1,
-          episode: firstEpisode.number ?? 1,
+          season: firstEpisode.season!,
+          episode: firstEpisode.number!,
         );
       }
 
@@ -73,10 +116,10 @@ final nextEpisodeProvider =
       final watchedSet =
           watchedEpisodes.map((e) => '${e.season}-${e.episode}').toSet();
 
-      // Find the first unwatched episode
-      for (final episode in allEpisodes) {
-        final seasonNum = episode.season ?? 0;
-        final episodeNum = episode.number ?? 0;
+      // Find the first unwatched, valid, aired episode
+      for (final episode in validEpisodes) {
+        final seasonNum = episode.season!;
+        final episodeNum = episode.number!;
         final key = '$seasonNum-$episodeNum';
 
         if (!watchedSet.contains(key)) {
@@ -87,10 +130,10 @@ final nextEpisodeProvider =
         }
       }
 
-      // All episodes watched
+      // ✅ FIX 3: All AIRED episodes are watched = truly caught up!
       return null;
     },
-    loading: () => const NextEpisode(season: 1, episode: 1),
-    error: (_, __) => const NextEpisode(season: 1, episode: 1),
+    loading: () => null, // Show loading state, not fake episode
+    error: (_, __) => null, // On error, show nothing
   );
 });

@@ -6,52 +6,47 @@ import 'package:lahv/models/tracking/tracked_episode.dart';
 import 'package:lahv/models/tracking/tracked_show.dart';
 import 'package:lahv/models/tvmaze/episode.dart';
 import 'package:lahv/models/tvmaze/show.dart';
+import 'package:lahv/services/hybrid_analytics_cache.dart';
 
 class TrackingRepository {
   final AppDatabase _database;
+  final HybridAnalyticsCache _analyticsCache;
   late final ShowDao _showDao;
   late final EpisodeDao _episodeDao;
 
-  TrackingRepository(this._database) {
+  TrackingRepository(this._database, this._analyticsCache) {
     _showDao = ShowDao(_database);
     _episodeDao = EpisodeDao(_database);
   }
 
   /// Helper method to check if an episode has aired
-  /// Considers both airdate and airtime if available
   bool _hasEpisodeAired(String? airdate, [String? airtime]) {
     if (airdate == null || airdate.isEmpty) {
-      return false; // If no airdate, consider it not aired
+      return false;
     }
 
     try {
       DateTime episodeDateTime;
 
       if (airtime != null && airtime.isNotEmpty) {
-        // Combine airdate and airtime (format: "HH:MM")
-        // TVMaze uses local time for the show's network
         final dateParts = airdate.split('-');
         final timeParts = airtime.split(':');
 
         episodeDateTime = DateTime(
-          int.parse(dateParts[0]), // year
-          int.parse(dateParts[1]), // month
-          int.parse(dateParts[2]), // day
-          int.parse(timeParts[0]), // hour
-          timeParts.length > 1 ? int.parse(timeParts[1]) : 0, // minute
+          int.parse(dateParts[0]),
+          int.parse(dateParts[1]),
+          int.parse(dateParts[2]),
+          int.parse(timeParts[0]),
+          timeParts.length > 1 ? int.parse(timeParts[1]) : 0,
         );
       } else {
-        // Only airdate available, assume end of day
         episodeDateTime =
             DateTime.parse(airdate).add(const Duration(hours: 23, minutes: 59));
       }
 
       final now = DateTime.now();
-
-      // Episode has aired if the datetime is in the past
       return episodeDateTime.isBefore(now);
     } catch (e) {
-      // If parsing fails, fall back to date-only comparison
       try {
         final episodeDate = DateTime.parse(airdate);
         final now = DateTime.now();
@@ -61,7 +56,7 @@ class TrackingRepository {
 
         return epDate.isBefore(today);
       } catch (e) {
-        return false; // If all parsing fails, consider it not aired
+        return false;
       }
     }
   }
@@ -104,11 +99,17 @@ class TrackingRepository {
     );
 
     await _showDao.insertShow(trackedShow);
+
+    // 🔔 Cache Hook: Show added
+    await _analyticsCache.onShowAdded(show.id!);
   }
 
   Future<void> removeShow(int showId) async {
     await _showDao.deleteShow(showId);
     await _episodeDao.deleteEpisodesForShow(showId);
+
+    // 🔔 Cache Hook: Show removed
+    await _analyticsCache.onShowRemoved(showId);
   }
 
   Future<List<TrackedShow>> getTrackedShows() async {
@@ -145,10 +146,20 @@ class TrackingRepository {
       throw Exception('Cannot mark unaired episode as watched');
     }
 
+    final watchedAt = DateTime.now();
+
     await _episodeDao.markWatched(
       showId: showId,
       season: season,
       episode: episode,
+    );
+
+    // 🔔 Cache Hook: Episode marked watched
+    await _analyticsCache.onEpisodeMarkedWatched(
+      showId: showId,
+      season: season,
+      episode: episode,
+      watchedAt: watchedAt,
     );
   }
 
@@ -157,20 +168,33 @@ class TrackingRepository {
     required int season,
     required int episode,
   }) async {
+    // Get current watched time before unmarking
+    final currentEpisode = await _episodeDao.getEpisode(
+      showId: showId,
+      season: season,
+      episode: episode,
+    );
+
     await _episodeDao.markUnwatched(
       showId: showId,
       season: season,
       episode: episode,
     );
+
+    // 🔔 Cache Hook: Episode marked unwatched
+    await _analyticsCache.onEpisodeMarkedUnwatched(
+      showId: showId,
+      season: season,
+      episode: episode,
+      previousWatchedAt: currentEpisode?.watchedAt,
+    );
   }
 
   /// Batch mark multiple episodes - optimized for bulk operations
-  /// Only marks episodes that have already aired
   Future<void> markMultipleEpisodesWatched({
     required int showId,
     required List<({int season, int episode})> episodes,
   }) async {
-    // Fetch all episodes for the show to check airdates
     final seasons = await tracker.getSeasons(showId);
     final List<Episode> allEpisodes = [];
 
@@ -181,7 +205,6 @@ class TrackingRepository {
       }
     }
 
-    // Filter episodes to only include those that have aired
     final airedEpisodes = episodes.where((ep) {
       final matchingEpisode = allEpisodes.firstWhere(
         (apiEp) => apiEp.season == ep.season && apiEp.number == ep.episode,
@@ -191,16 +214,17 @@ class TrackingRepository {
       return _hasEpisodeAired(matchingEpisode.airdate, matchingEpisode.airtime);
     }).toList();
 
-    // Only mark episodes that have aired
     if (airedEpisodes.isNotEmpty) {
       await _episodeDao.markMultipleWatched(
         showId: showId,
         episodes: airedEpisodes,
       );
+
+      // 🔔 Cache Hook: Multiple episodes marked (update show analytics)
+      await _analyticsCache.onShowAdded(showId); // Recompute show
     }
   }
 
-  /// Batch unmark multiple episodes - optimized for bulk operations
   Future<void> markMultipleEpisodesUnwatched({
     required int showId,
     required List<({int season, int episode})> episodes,
@@ -209,6 +233,9 @@ class TrackingRepository {
       showId: showId,
       episodes: episodes,
     );
+
+    // 🔔 Cache Hook: Multiple episodes unmarked (update show analytics)
+    await _analyticsCache.onShowAdded(showId); // Recompute show
   }
 
   Future<List<TrackedEpisode>> getEpisodesForShow(int showId) async {
@@ -232,14 +259,13 @@ class TrackingRepository {
   }
 
   // -------- Auto-completion Check --------
+  /// FIXED: Now filters out special episodes (number = 0 or null) when checking completion
   Future<bool> checkAndUpdateShowCompletion(int showId) async {
     try {
-      // Get the tracked show
       final trackedShow = await _showDao.getShow(showId);
 
       if (trackedShow == null) return false;
 
-      // Get all episodes for the show from API
       final seasons = await tracker.getSeasons(showId);
       final List<Episode> allEpisodes = [];
 
@@ -252,40 +278,40 @@ class TrackingRepository {
 
       if (allEpisodes.isEmpty) return false;
 
-      // Filter to only aired episodes
-      final airedEpisodes = allEpisodes
+      // FIXED: Filter out special episodes (number = 0 or null)
+      // Only consider regular episodes for completion status
+      final regularEpisodes =
+          allEpisodes.where((ep) => (ep.number ?? 0) > 0).toList();
+
+      if (regularEpisodes.isEmpty) return false;
+
+      final airedEpisodes = regularEpisodes
           .where((ep) => _hasEpisodeAired(ep.airdate, ep.airtime))
           .toList();
 
       if (airedEpisodes.isEmpty) return false;
 
-      // Get watched episodes from database
       final watchedEpisodes = await _episodeDao.getEpisodesForShow(showId);
 
-      // Create set of watched episode keys
       final watchedSet =
           watchedEpisodes.map((e) => '${e.season}-${e.episode}').toSet();
 
-      // Check if all AIRED episodes are watched
       final allWatched = airedEpisodes.every((ep) {
         final key = '${ep.season ?? 0}-${ep.number ?? 0}';
         return watchedSet.contains(key);
       });
 
-      // Update status based on completion
       if (allWatched && trackedShow.status != TrackedShowStatus.completed) {
         await _showDao.updateStatus(showId, TrackedShowStatus.completed);
-        return true; // ✅ Status changed to completed
+        return true;
       } else if (!allWatched &&
           trackedShow.status == TrackedShowStatus.completed) {
-        // If previously completed but now has unwatched episodes, move back to watching
         await _showDao.updateStatus(showId, TrackedShowStatus.watching);
-        return true; // ✅ Status changed to watching
+        return true;
       }
 
-      return false; // ✅ Status unchanged
+      return false;
     } catch (e) {
-      // Silently fail - this is a background check
       return false;
     }
   }

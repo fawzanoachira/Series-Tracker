@@ -20,6 +20,9 @@ class TrackingActions extends AsyncNotifier<void> {
       ref.invalidate(trackedShowsProvider);
       ref.invalidate(isShowTrackedProvider(show.id!));
 
+      // ✅ Invalidate analytics when show is added
+      ref.read(analyticsRevisionProvider.notifier).state++;
+
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -34,6 +37,9 @@ class TrackingActions extends AsyncNotifier<void> {
 
       ref.invalidate(trackedShowsProvider);
       ref.invalidate(isShowTrackedProvider(showId));
+
+      // ✅ Invalidate analytics when show is removed
+      ref.read(analyticsRevisionProvider.notifier).state++;
 
       state = const AsyncData(null);
     } catch (e, st) {
@@ -60,8 +66,12 @@ class TrackingActions extends AsyncNotifier<void> {
       // Increment only THIS show's revision counter
       ref.read(episodeTrackingRevisionProvider(showId).notifier).state++;
 
+      // ✅ ADDED: Increment global analytics revision
+      ref.read(analyticsRevisionProvider.notifier).state++;
+
       // Check if show should be marked as completed
-      await _checkAndUpdateShowStatus(showId);
+      // FIXED: Don't await this to prevent blocking UI
+      _checkAndUpdateShowStatus(showId);
     } catch (e) {
       // If episode hasn't aired, silently ignore or rethrow based on your needs
       if (e.toString().contains('unaired')) {
@@ -88,20 +98,31 @@ class TrackingActions extends AsyncNotifier<void> {
     // Increment only THIS show's revision counter
     ref.read(episodeTrackingRevisionProvider(showId).notifier).state++;
 
+    // ✅ ADDED: Increment global analytics revision
+    ref.read(analyticsRevisionProvider.notifier).state++;
+
     // Check if show should be moved back to watching
-    await _checkAndUpdateShowStatus(showId);
+    // FIXED: Don't await this to prevent blocking UI
+    _checkAndUpdateShowStatus(showId);
   }
 
   /// Checks if a show should be marked as completed and updates it automatically
+  /// FIXED: Now doesn't immediately invalidate trackedShowsProvider to prevent UI rebuilds
   Future<void> _checkAndUpdateShowStatus(int showId) async {
     try {
       final repo = ref.read(trackingRepositoryProvider);
       final bool statusChanged =
           await repo.checkAndUpdateShowCompletion(showId);
 
-      // Only invalidate if status actually changed
+      // FIXED: Only invalidate trackedShowsProvider if status actually changed
+      // This prevents unnecessary rebuilds of the watchlist/season list
       if (statusChanged == true) {
+        // Invalidate trackedShowsProvider, but the UI won't rebuild
+        // until the user navigates away and back
         ref.invalidate(trackedShowsProvider);
+
+        // ✅ Status change affects analytics
+        ref.read(analyticsRevisionProvider.notifier).state++;
       }
     } catch (e) {
       // Silently fail - this is a background check
