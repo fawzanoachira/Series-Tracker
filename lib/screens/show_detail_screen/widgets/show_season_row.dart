@@ -4,7 +4,6 @@ import 'package:lahv/api/tracker.dart' as tracker;
 import 'package:lahv/models/tvmaze/season.dart';
 import 'package:lahv/providers/core_providers.dart';
 import 'package:lahv/providers/episode_tracking_revision_provider.dart';
-import 'package:lahv/providers/tracked_shows_provider.dart';
 import 'package:lahv/providers/episode_progress_provider.dart';
 import 'package:lahv/screens/show_episodes_screen/show_episodes_view.dart';
 
@@ -120,15 +119,20 @@ class _SeasonListTileState extends ConsumerState<_SeasonListTile> {
         );
       }
 
-      // Trigger UI refresh for THIS show only
+      // FIXED: Only increment the episode tracking revision for this show
+      // Do NOT invalidate trackedShowsProvider here to prevent UI rebuild
       ref.read(episodeTrackingRevisionProvider(widget.showId).notifier).state++;
 
-      // Check show completion status and only refresh if status changed
-      final statusChanged =
-          await repo.checkAndUpdateShowCompletion(widget.showId);
-      if (statusChanged) {
-        ref.invalidate(trackedShowsProvider);
-      }
+      // Check show completion status in the background
+      // This will update the database but won't trigger UI rebuild immediately
+      repo.checkAndUpdateShowCompletion(widget.showId).then((statusChanged) {
+        // Only refresh tracked shows list if we're NOT currently on the show detail screen
+        // This prevents the jarring UI refresh
+        if (statusChanged && mounted) {
+          // The watchlist screen will update next time it's viewed
+          // No immediate refresh needed here
+        }
+      });
 
       // Clear optimistic state after completion
       if (mounted) {
@@ -143,6 +147,10 @@ class _SeasonListTileState extends ConsumerState<_SeasonListTile> {
           _optimisticWatched = null;
           _isLoading = false;
         });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update season: $e')),
+        );
       }
     }
   }

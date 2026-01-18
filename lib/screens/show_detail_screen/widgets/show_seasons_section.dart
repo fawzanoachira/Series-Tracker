@@ -1,26 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lahv/api/tracker.dart';
 import 'package:lahv/models/tvmaze/season.dart';
 import 'package:lahv/screens/show_detail_screen/widgets/show_season_row.dart';
 
-class ShowSeasonsSection extends StatelessWidget {
+// Cached provider for seasons - won't rebuild unless explicitly invalidated
+final showSeasonsProvider =
+    FutureProvider.family<List<Season>, int>((ref, showId) async {
+  return getSeasons(showId);
+});
+
+class ShowSeasonsSection extends ConsumerWidget {
   final int showId;
 
   const ShowSeasonsSection({super.key, required this.showId});
 
   @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<Season>>(
-      future: getSeasons(showId),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            // padding: EdgeInsets.all(16),
-            child: CircularProgressIndicator(),
-          );
-        }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final seasonsAsync = ref.watch(showSeasonsProvider(showId));
 
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+    return seasonsAsync.when(
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (error, stack) => const SizedBox.shrink(),
+      data: (seasons) {
+        if (seasons.isEmpty) {
           return const SizedBox.shrink();
         }
 
@@ -35,7 +43,7 @@ class ShowSeasonsSection extends StatelessWidget {
               ),
             ),
             ShowSeasonRow(
-              seasons: snapshot.data!,
+              seasons: seasons,
               showId: showId,
             ),
           ],
