@@ -115,27 +115,34 @@ class TrackedShowListTile extends ConsumerWidget {
 
       if (allEpisodes.isEmpty) return;
 
-      // Sort episodes by season and number
-      allEpisodes.sort((a, b) {
-        final aSeason = a.season ?? 0;
-        final bSeason = b.season ?? 0;
-        if (aSeason != bSeason) return aSeason.compareTo(bSeason);
-        return (a.number ?? 0).compareTo(b.number ?? 0);
-      });
+      // ✅ FIX: Filter out special episodes AND unaired episodes
+      final validEpisodes = allEpisodes.where((ep) {
+        final seasonNum = ep.season ?? 0;
+        final episodeNum = ep.number ?? 0;
 
-      // Filter to only aired episodes
-      final airedEpisodes = allEpisodes.where((ep) {
+        // Must be a regular episode (not special)
+        if (seasonNum == 0 || episodeNum == 0) return false;
+
+        // Must have aired
         return _hasEpisodeAired(ep.airdate, ep.airtime);
       }).toList();
 
-      if (airedEpisodes.isEmpty) return;
+      if (validEpisodes.isEmpty) return;
+
+      // Sort episodes by season and number
+      validEpisodes.sort((a, b) {
+        final aSeason = a.season!;
+        final bSeason = b.season!;
+        if (aSeason != bSeason) return aSeason.compareTo(bSeason);
+        return a.number!.compareTo(b.number!);
+      });
 
       // Find the index of the target episode (next episode to watch)
-      final episodeIndex = airedEpisodes.indexWhere(
+      final episodeIndex = validEpisodes.indexWhere(
         (e) => e.season == season && e.number == episode,
       );
 
-      // If target episode not found, start from first aired episode
+      // If target episode not found, start from first valid episode
       final initialIndex = episodeIndex >= 0 ? episodeIndex : 0;
 
       if (!context.mounted) return;
@@ -147,7 +154,7 @@ class TrackedShowListTile extends ConsumerWidget {
         builder: (_) => SafeArea(
           child: EpisodeCarouselSheet(
             showId: showId,
-            episodes: airedEpisodes,
+            episodes: validEpisodes,
             initialIndex: initialIndex,
             showImages: showImages,
           ),

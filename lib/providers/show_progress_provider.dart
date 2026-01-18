@@ -52,7 +52,7 @@ class ShowProgress {
   });
 }
 
-/// Provider that calculates show progress based on ONLY aired episodes
+/// Provider that calculates show progress based on ONLY aired, valid episodes
 final showProgressProvider =
     FutureProvider.family<ShowProgress, int>((ref, showId) async {
   // Watch the revision to rebuild when episodes are marked
@@ -80,13 +80,20 @@ final showProgressProvider =
       );
     }
 
-    // Filter to only aired episodes
-    final airedEpisodes = allEpisodes.where((ep) {
+    // ✅ FIX: Filter to only valid, aired episodes (exclude specials and unaired)
+    final validAiredEpisodes = allEpisodes.where((ep) {
+      final seasonNum = ep.season ?? 0;
+      final episodeNum = ep.number ?? 0;
+
+      // Must be a regular episode (not special - S00E00)
+      if (seasonNum == 0 || episodeNum == 0) return false;
+
+      // Must have aired
       return _hasEpisodeAired(ep.airdate, ep.airtime);
     }).toList();
 
-    // If no aired episodes yet
-    if (airedEpisodes.isEmpty) {
+    // If no valid aired episodes yet
+    if (validAiredEpisodes.isEmpty) {
       return ShowProgress(
         watchedCount: 0,
         totalCount: 0,
@@ -101,20 +108,22 @@ final showProgressProvider =
     final watchedSet =
         watchedEpisodes.map((e) => '${e.season}-${e.episode}').toSet();
 
-    // Count how many aired episodes are watched
+    // Count how many valid aired episodes are watched
     int watchedAiredCount = 0;
-    for (final ep in airedEpisodes) {
-      final key = '${ep.season ?? 0}-${ep.number ?? 0}';
+    for (final ep in validAiredEpisodes) {
+      final key = '${ep.season!}-${ep.number!}';
       if (watchedSet.contains(key)) {
         watchedAiredCount++;
       }
     }
 
-    final percentage = watchedAiredCount / airedEpisodes.length;
+    final percentage = validAiredEpisodes.isNotEmpty
+        ? watchedAiredCount / validAiredEpisodes.length
+        : 0.0;
 
     return ShowProgress(
       watchedCount: watchedAiredCount,
-      totalCount: airedEpisodes.length,
+      totalCount: validAiredEpisodes.length,
       percentage: percentage,
     );
   } catch (e) {

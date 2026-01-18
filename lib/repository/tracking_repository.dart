@@ -259,6 +259,7 @@ class TrackingRepository {
   }
 
   // -------- Auto-completion Check --------
+  /// FIXED: Now filters out special episodes (number = 0 or null) when checking completion
   Future<bool> checkAndUpdateShowCompletion(int showId) async {
     try {
       final trackedShow = await _showDao.getShow(showId);
@@ -277,7 +278,14 @@ class TrackingRepository {
 
       if (allEpisodes.isEmpty) return false;
 
-      final airedEpisodes = allEpisodes
+      // FIXED: Filter out special episodes (number = 0 or null)
+      // Only consider regular episodes for completion status
+      final regularEpisodes =
+          allEpisodes.where((ep) => (ep.number ?? 0) > 0).toList();
+
+      if (regularEpisodes.isEmpty) return false;
+
+      final airedEpisodes = regularEpisodes
           .where((ep) => _hasEpisodeAired(ep.airdate, ep.airtime))
           .toList();
 

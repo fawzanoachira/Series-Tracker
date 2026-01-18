@@ -57,15 +57,19 @@ class _SeasonListTileState extends ConsumerState<_SeasonListTile> {
   Future<bool> _isSeasonFullyWatched() async {
     try {
       final episodes = await tracker.getEpisodes(widget.season.id!);
+      // Filter out specials (episode number 0 or null)
+      final regularEpisodes =
+          episodes.where((ep) => (ep.number ?? 0) > 0).toList();
+
       final watchedEpisodes =
           await ref.read(episodeProgressProvider(widget.showId).future);
 
-      if (episodes.isEmpty) return false;
+      if (regularEpisodes.isEmpty) return false;
 
       final watchedSet =
           watchedEpisodes.map((e) => '${e.season}-${e.episode}').toSet();
 
-      return episodes.every((ep) {
+      return regularEpisodes.every((ep) {
         final key = '${ep.season ?? 0}-${ep.number ?? 0}';
         return watchedSet.contains(key);
       });
@@ -80,8 +84,11 @@ class _SeasonListTileState extends ConsumerState<_SeasonListTile> {
     try {
       // Fetch all episodes for this season
       final episodes = await tracker.getEpisodes(widget.season.id!);
+      // Filter out specials (episode number 0 or null)
+      final regularEpisodes =
+          episodes.where((ep) => (ep.number ?? 0) > 0).toList();
 
-      if (episodes.isEmpty) return;
+      if (regularEpisodes.isEmpty) return;
 
       // Check if season is fully watched
       final isFullyWatched = await _isSeasonFullyWatched();
@@ -92,8 +99,8 @@ class _SeasonListTileState extends ConsumerState<_SeasonListTile> {
         _isLoading = true;
       });
 
-      // Prepare episodes list for batch operation
-      final episodesList = episodes
+      // Prepare episodes list for batch operation (only regular episodes, no specials)
+      final episodesList = regularEpisodes
           .map((ep) => (season: ep.season ?? 0, episode: ep.number ?? 0))
           .toList();
 
@@ -154,7 +161,7 @@ class _SeasonListTileState extends ConsumerState<_SeasonListTile> {
         children: [
           watchedEpisodesAsync.when(
             loading: () => const SizedBox(
-              width: 48,
+              width: 80,
               height: 48,
               child: Center(
                 child: SizedBox(
@@ -164,24 +171,36 @@ class _SeasonListTileState extends ConsumerState<_SeasonListTile> {
                 ),
               ),
             ),
-            error: (_, __) => const SizedBox(width: 48),
+            error: (_, __) => const SizedBox(width: 80),
             data: (watchedEpisodes) {
               return FutureBuilder(
                 future: tracker.getEpisodes(widget.season.id!),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
-                    return const SizedBox(width: 48);
+                    return const SizedBox(width: 80);
                   }
 
                   final episodes = snapshot.data!;
+                  // Filter out specials (episode number 0 or null)
+                  final regularEpisodes =
+                      episodes.where((ep) => (ep.number ?? 0) > 0).toList();
 
-                  // Calculate if season is fully watched
+                  // Calculate watched episodes for this season
                   final watchedSet = watchedEpisodes
                       .map((e) => '${e.season}-${e.episode}')
                       .toSet();
 
-                  final actualWatched = episodes.isNotEmpty &&
-                      episodes.every((ep) {
+                  final watchedCount = regularEpisodes.where((ep) {
+                    final season = ep.season ?? 0;
+                    final number = ep.number ?? 0;
+                    final key = '$season-$number';
+                    return watchedSet.contains(key);
+                  }).length;
+
+                  final totalCount = regularEpisodes.length;
+
+                  final actualWatched = regularEpisodes.isNotEmpty &&
+                      regularEpisodes.every((ep) {
                         final season = ep.season ?? 0;
                         final number = ep.number ?? 0;
                         final key = '$season-$number';
@@ -191,23 +210,45 @@ class _SeasonListTileState extends ConsumerState<_SeasonListTile> {
                   // Use optimistic state if available, otherwise use actual state
                   final isFullyWatched = _optimisticWatched ?? actualWatched;
 
-                  return IconButton(
-                    icon: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Icon(
-                            isFullyWatched
-                                ? Icons.check_circle
-                                : Icons.add_circle_outline,
-                            color: isFullyWatched ? Colors.green : Colors.grey,
-                          ),
-                    tooltip: isFullyWatched
-                        ? 'Mark season as unwatched'
-                        : 'Mark season as watched',
-                    onPressed: _isLoading ? null : _toggleSeasonWatched,
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Episode count display
+                      Text(
+                        '$watchedCount/$totalCount',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: watchedCount == totalCount
+                              ? Colors.green
+                              : Colors.grey.shade600,
+                          fontWeight: watchedCount == totalCount
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Watch/Unwatch button
+                      IconButton(
+                        icon: _isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Icon(
+                                isFullyWatched
+                                    ? Icons.check_circle
+                                    : Icons.add_circle_outline,
+                                color:
+                                    isFullyWatched ? Colors.green : Colors.grey,
+                              ),
+                        tooltip: isFullyWatched
+                            ? 'Mark season as unwatched'
+                            : 'Mark season as watched',
+                        onPressed: _isLoading ? null : _toggleSeasonWatched,
+                      ),
+                    ],
                   );
                 },
               );
